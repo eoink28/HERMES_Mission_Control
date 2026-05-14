@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HERMES — Flight Software Monitor</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070d;--bg1:#0e0d16;--bg2:#13111c;--bg3:#1a1826;
+  --panel:#12111b;--border:#1e1c2e;--border2:#2a2740;
+  --accent:#f5a623;--accent-dim:rgba(245,166,35,0.1);
+  --green:#3ddc84;--green-dim:rgba(61,220,132,0.08);
+  --amber:#f5a623;--amber2:#e8890a;--amber-dim:rgba(245,166,35,0.1);
+  --red:#ff4757;--red-dim:rgba(255,71,87,0.08);
+  --purple:#8866ff;
+  --bg0:#06050c;--text:#9e9a88;--text2:#4a4760;--text3:#252338;--white:#f0ece0;
+  --mono:'Share Tech Mono',monospace;--head:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--white);font-family:var(--body);font-size:12px;display:flex;flex-direction:column;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0.5;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")}
+
+/* ── HEADER ── */
+.hdr{height:70px;background:var(--bg1);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;padding:0 32px;flex-shrink:0;position:relative;z-index:100}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:0.2}
+.patch{width:50px;height:50px;border-radius:50%;border:2px solid var(--amber2);background:radial-gradient(circle at 38% 32%, #1e1b2e, #08070d);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;box-shadow:0 0 20px rgba(245,166,35,0.18), inset 0 0 10px rgba(245,166,35,0.04)}
+.patch::before{content:'';position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(245,166,35,0.18)}
+.patch::after{content:'';position:absolute;inset:7px;border-radius:50%;border:1px dashed rgba(245,166,35,0.1)}
+.patch-inner{display:flex;flex-direction:column;align-items:center;gap:1px;position:relative;z-index:1}
+.patch-icon{font-size:15px;filter:drop-shadow(0 0 5px rgba(245,166,35,0.6))}
+.patch-text{font-family:var(--head);font-size:10px;letter-spacing:0.2em;color:var(--amber);line-height:1}
+.hdr-brand{display:flex;align-items:center;gap:14px}
+.brand-title{font-family:var(--head);font-size:30px;letter-spacing:0.15em;color:var(--white);line-height:1}
+.brand-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.16em;color:var(--text2);margin-top:3px}
+.hdr-centre{display:flex;align-items:center;gap:20px}
+.flag-grp{display:flex;align-items:center;gap:8px}
+.flag-lbl{font-family:var(--mono);font-size:8px;letter-spacing:0.12em;color:var(--text2)}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.pill{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;padding:4px 10px;border:1px solid;display:flex;align-items:center;gap:5px;background:var(--bg);color:var(--text2)}
+.pill.ok{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.pill.warn{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.pill.fault{border-color:var(--red);color:var(--red);background:var(--red-dim);animation:pflash 0.8s ease-in-out infinite}
+@keyframes pflash{0%,100%{opacity:1}50%{opacity:0.4}}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:dblink 1.8s ease-in-out infinite}
+@keyframes dblink{0%,100%{opacity:1}50%{opacity:0.15}}
+.nav{display:flex;gap:0}
+.nav a{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;padding:8px 18px;background:var(--bg);border:1px solid var(--border2);color:var(--text2);text-decoration:none;transition:all 0.2s;margin-left:-1px}
+.nav a:hover{border-color:rgba(245,166,35,0.4);color:var(--amber);background:rgba(245,166,35,0.05);z-index:1}
+.nav a.active{border-color:var(--amber);color:var(--bg1);background:var(--amber2);z-index:1}
+.flag{height:20px;border:1px solid var(--border2);overflow:hidden;display:flex;flex-shrink:0}
+.flag-ie{width:32px}
+.flag-ie .s1{flex:1;background:#169B62}.flag-ie .s2{flex:1;background:#f0ece0}.flag-ie .s3{flex:1;background:#FF883E}
+.flag-esa{width:44px;background:#003399;align-items:center;justify-content:center}
+.flag-esa span{font-family:var(--mono);font-size:7px;color:white;letter-spacing:0.1em}
+
+/* ── LAYOUT ── */
+.workspace{flex:1;display:grid;grid-template-columns:210px 1fr 260px;gap:1px;background:var(--border);overflow:hidden}
+.pnl{background:var(--panel);overflow:hidden;display:flex;flex-direction:column}
+.pnl-hdr{font-family:var(--mono);font-size:8px;letter-spacing:0.2em;color:var(--text2);padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.pnl-hdr::before{content:'';width:3px;height:9px;background:var(--accent);opacity:0.4}
+.pnl-body{padding:10px 12px;overflow-y:auto;flex:1}
+.pnl-body::-webkit-scrollbar{width:3px}
+.pnl-body::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* ── LEFT: Subsystems ── */
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:10px}
+.mbtn{font-family:var(--mono);font-size:8px;letter-spacing:0.06em;padding:5px 4px;text-align:center;background:var(--bg0);border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:all 0.2s}
+.mbtn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.mbtn:hover:not(.active){color:var(--text);background:var(--bg3)}
+
+.ss-card{background:var(--bg2);border:1px solid var(--border);padding:8px 9px;margin-bottom:5px;transition:border-color 0.3s;position:relative;overflow:hidden}
+.ss-card.fault{border-color:rgba(255,51,85,0.5);animation:cft 1.4s ease-in-out infinite}
+.ss-card.warn{border-color:rgba(255,170,0,0.4)}
+@keyframes cft{0%,100%{border-color:rgba(255,51,85,0.4);background:var(--bg2)}50%{border-color:rgba(255,51,85,1);background:rgba(255,51,85,0.04)}}
+.ss-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.ss-name{font-family:var(--body);font-size:10px;font-weight:500;color:var(--white);letter-spacing:0.04em}
+.ss-st{font-family:var(--mono);font-size:8px}
+.st-ok{color:var(--green)}.st-warn{color:var(--amber)}.st-fault{color:var(--red)}
+.bar{height:2px;background:var(--bg0);border-radius:1px;overflow:hidden;margin-bottom:3px}
+.bar-f{height:100%;border-radius:1px;transition:width 1.2s ease}
+.bf-g{background:var(--green)}.bf-a{background:var(--amber)}.bf-r{background:var(--red)}.bf-b{background:var(--accent)}
+.ss-val{font-family:var(--mono);font-size:8px;color:var(--text2)}
+
+.sec-lbl{font-family:var(--mono);font-size:8px;letter-spacing:0.18em;color:var(--text2);margin:10px 0 5px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+
+/* Scheduler */
+.sched-task{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:8px}
+.task-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.task-name{color:var(--text);flex:1}
+.task-interval{color:var(--text2)}
+.task-status{color:var(--green)}
+
+/* Fault inject */
+.fi-btn{display:block;width:100%;font-family:var(--mono);font-size:8px;letter-spacing:0.06em;padding:5px 8px;text-align:left;background:var(--bg0);border:1px solid rgba(255,51,85,0.15);color:rgba(255,51,85,0.5);cursor:pointer;transition:all 0.2s;margin-bottom:3px}
+.fi-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+.fi-recover{border-color:rgba(0,200,240,0.2)!important;color:rgba(0,200,240,0.4)!important}
+.fi-recover:hover{border-color:var(--accent)!important;color:var(--accent)!important;background:var(--accent-dim)!important}
+
+/* ── CENTER: Telemetry + FDIR ── */
+.center-col{grid-column:2;display:flex;flex-direction:column;gap:1px}
+
+/* Telem grid */
+.telem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);flex-shrink:0}
+.tval-box{background:var(--panel);padding:10px 12px}
+.tval-lbl{font-family:var(--mono);font-size:7px;color:var(--text2);letter-spacing:0.14em;margin-bottom:4px}
+.tval-num{font-family:var(--head);font-size:26px;font-weight:500;color:var(--white);line-height:1;transition:color 0.3s}
+.tval-unit{font-family:var(--mono);font-size:8px;color:var(--text2);margin-left:3px}
+
+/* FDIR Panel — the hero */
+.fdir-panel{flex:1;background:var(--panel);overflow:hidden;display:flex;flex-direction:column}
+.fdir-hdr{background:var(--bg2);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.fdir-title{font-family:var(--head);font-size:14px;font-weight:600;letter-spacing:0.2em;color:var(--white)}
+.fdir-sub{font-family:var(--mono);font-size:8px;color:var(--text2);letter-spacing:0.1em;margin-top:1px}
+.fdir-status{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;padding:4px 10px;border:1px solid var(--green);color:var(--green);background:var(--green-dim)}
+
+.fdir-body{flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.fdir-body::-webkit-scrollbar{width:3px}
+.fdir-body::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* Recovery sequence visualiser */
+.recovery-seq{background:var(--bg2);border:1px solid var(--border);padding:12px;display:none}
+.recovery-seq.active{display:block}
+.rs-title{font-family:var(--head);font-size:12px;font-weight:600;letter-spacing:0.15em;color:var(--white);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.rs-system{font-family:var(--mono);font-size:9px;color:var(--amber);letter-spacing:0.1em}
+.rs-stages{display:flex;flex-direction:column;gap:4px}
+.rs-stage{display:flex;align-items:center;gap:10px;padding:6px 10px;background:var(--bg0);border:1px solid var(--border);transition:all 0.4s;opacity:0.3}
+.rs-stage.current{opacity:1;border-color:var(--amber);background:var(--amber-dim)}
+.rs-stage.done{opacity:0.7;border-color:var(--green);background:var(--green-dim)}
+.rs-stage.fault-st{opacity:1;border-color:var(--red);background:var(--red-dim)}
+.rs-num{font-family:var(--mono);font-size:10px;color:var(--text2);min-width:18px}
+.rs-label{font-family:var(--body);font-size:10px;flex:1;transition:color 0.4s}
+.rs-stage.current .rs-label{color:var(--amber)}
+.rs-stage.done .rs-label{color:var(--green)}
+.rs-stage.fault-st .rs-label{color:var(--red)}
+.rs-icon{font-size:10px;min-width:16px;text-align:center}
+.rs-time{font-family:var(--mono);font-size:8px;color:var(--text2)}
+.rs-detail{font-family:var(--mono);font-size:8px;color:var(--text2);margin-top:3px;padding-left:28px;display:none;line-height:1.6}
+.rs-stage.current .rs-detail,.rs-stage.done .rs-detail{display:block}
+
+/* Progress bar for active recovery */
+.rs-progress{height:2px;background:var(--bg0);border-radius:1px;overflow:hidden;margin-top:8px}
+.rs-progress-f{height:100%;background:var(--amber);border-radius:1px;transition:width 0.4s ease}
+
+/* FDIR stats */
+.fdir-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.fdir-stat{background:var(--bg2);border:1px solid var(--border);padding:8px;text-align:center}
+.fdir-stat-val{font-family:var(--head);font-size:20px;font-weight:500;color:var(--white);line-height:1;margin-bottom:2px}
+.fdir-stat-lbl{font-family:var(--mono);font-size:7px;color:var(--text2);letter-spacing:0.1em}
+
+/* Event log */
+.event-log{flex:1;min-height:0}
+.log-rows{height:180px;overflow-y:auto}
+.log-rows::-webkit-scrollbar{width:2px}
+.log-rows::-webkit-scrollbar-thumb{background:var(--border2)}
+.log-row{display:flex;gap:8px;font-family:var(--mono);font-size:9px;padding:3px 0;border-bottom:1px solid rgba(12,32,48,0.6);animation:lrin 0.25s ease;line-height:1.5}
+@keyframes lrin{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+.lr-t{color:var(--text3);min-width:68px;flex-shrink:0}
+.lr-s{color:var(--accent);min-width:48px;flex-shrink:0;opacity:0.7}
+.lr-m{color:var(--text)}
+.lr-m.ok{color:var(--green)}.lr-m.warn{color:var(--amber)}.lr-m.fault{color:var(--red)}.lr-m.cmd{color:var(--purple)}
+
+/* ── RIGHT: Telemetry detail ── */
+.trow{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--border)}
+.trow-lbl{font-family:var(--body);font-size:10px;color:var(--text2)}
+.trow-val{font-family:var(--mono);font-size:13px;color:var(--white);transition:color 0.3s}
+.trow-unit{font-family:var(--mono);font-size:8px;color:var(--text2);margin-left:2px}
+
+/* CMD */
+.cmd-area{margin-top:10px;background:var(--bg0);border:1px solid var(--border2);padding:9px 10px}
+.cmd-lbl{font-family:var(--mono);font-size:7px;letter-spacing:0.18em;color:var(--text2);margin-bottom:6px}
+.cmd-row{display:flex;align-items:center;gap:6px}
+.cmd-gt{font-family:var(--mono);font-size:11px;color:var(--accent)}
+.cmd-in{flex:1;background:none;border:none;outline:none;font-family:var(--mono);font-size:10px;color:var(--white);caret-color:var(--accent)}
+.cmd-go{font-family:var(--mono);font-size:7px;letter-spacing:0.1em;padding:3px 7px;background:none;border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:all 0.2s}
+.cmd-go:hover{border-color:var(--accent);color:var(--accent)}
+.qcmds{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px}
+.qc{font-family:var(--mono);font-size:7px;letter-spacing:0.06em;padding:2px 5px;background:var(--bg0);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all 0.15s}
+.qc:hover{border-color:var(--accent);color:var(--accent)}
+
+/* Orbit mini */
+#orbitCanvas{display:block;width:100%;height:100px;background:var(--bg1)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="patch">
+      <div class="patch-inner">
+        <div class="patch-icon">◈</div>
+        <div class="patch-text">HERMES</div>
+      </div>
+    </div>
+    <div>
+      <div class="brand-title">HERMES</div>
+      <div class="brand-sub">FLIGHT SOFTWARE · AUTONOMOUS CONTROL SYSTEM</div>
+    </div>
+  </div>
+
+  <div class="hdr-centre">
+    <div class="flag-grp">
+      <div class="flag flag-ie"><div class="s1"></div><div class="s2"></div><div class="s3"></div></div>
+      <span class="flag-lbl">TU DUBLIN</span>
+    </div>
+    <div class="flag-grp">
+      <div class="flag flag-esa"><span>ESA</span></div>
+      <span class="flag-lbl">ESA PARTNER</span>
+    </div>
+  </div>
+
+  <div class="hdr-r">
+    <nav class="nav">
+      <a href="Space/index.html">HOME</a>
+      <a href="flight.html" class="active">FLIGHT SOFTWARE</a>
+      <a href="network.html">GROUND NETWORK</a>
+    </nav>
+    <div class="pill ok" id="pill-sys"><span class="dot"></span>SYSTEM NOMINAL</div>
+    <div class="pill ok" id="pill-fdir"><span class="dot"></span>FDIR ARMED</div>
+    <div class="pill ok"><span class="dot"></span><span id="h-met">000:00:12:44</span></div>
+  </div>
+</header>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- LEFT: Subsystems -->
+  <div class="pnl">
+    <div class="pnl-hdr">SUBSYSTEM STATUS</div>
+    <div class="pnl-body">
+
+      <div class="mode-row">
+        <div class="mbtn active" onclick="setMode(this,'NOMINAL')">NOMINAL</div>
+        <div class="mbtn" onclick="setMode(this,'SAFE')">SAFE MODE</div>
+        <div class="mbtn" onclick="setMode(this,'LOW POWER')">LOW POWER</div>
+        <div class="mbtn" onclick="setMode(this,'ECLIPSE')">ECLIPSE</div>
+      </div>
+
+      <div class="ss-card" id="ss-eps">
+        <div class="ss-top"><span class="ss-name">Power System (EPS)</span><span class="ss-st st-ok" id="st-eps">NOMINAL</span></div>
+        <div class="bar"><div class="bar-f bf-g" id="bar-eps" style="width:78%"></div></div>
+        <div class="ss-val" id="v-eps">78% · 3.94V · 420mA</div>
+      </div>
+
+      <div class="ss-card" id="ss-obc">
+        <div class="ss-top"><span class="ss-name">On-Board Computer</span><span class="ss-st st-ok" id="st-obc">RUNNING</span></div>
+        <div class="bar"><div class="bar-f bf-b" id="bar-obc" style="width:34%"></div></div>
+        <div class="ss-val" id="v-obc">CPU 34% · Scheduler active</div>
+      </div>
+
+      <div class="ss-card" id="ss-com">
+        <div class="ss-top"><span class="ss-name">Communications</span><span class="ss-st st-ok" id="st-com">TX / RX OK</span></div>
+        <div class="bar"><div class="bar-f bf-b" id="bar-com" style="width:82%"></div></div>
+        <div class="ss-val" id="v-com">LoRa -72dBm · SNR 8.1dB</div>
+      </div>
+
+      <div class="ss-card" id="ss-adcs">
+        <div class="ss-top"><span class="ss-name">Attitude Control</span><span class="ss-st st-ok" id="st-adcs">STABLE</span></div>
+        <div class="bar"><div class="bar-f bf-g" id="bar-adcs" style="width:94%"></div></div>
+        <div class="ss-val" id="v-adcs">Roll 0.3° · Pitch -1.2° · Yaw 0.8°</div>
+      </div>
+
+      <div class="ss-card" id="ss-thm">
+        <div class="ss-top"><span class="ss-name">Thermal Management</span><span class="ss-st st-ok" id="st-thm">NOMINAL</span></div>
+        <div class="bar"><div class="bar-f bf-a" id="bar-thm" style="width:52%"></div></div>
+        <div class="ss-val" id="v-thm">Core 24.4°C · Within limits</div>
+      </div>
+
+      <div class="ss-card" id="ss-pay">
+        <div class="ss-top"><span class="ss-name">Payload Sensors</span><span class="ss-st st-ok" id="st-pay">ACTIVE</span></div>
+        <div class="bar"><div class="bar-f bf-g" style="width:100%"></div></div>
+        <div class="ss-val" id="v-pay">Press 101.2kPa · Hum 42%</div>
+      </div>
+
+      <div class="sec-lbl">FAULT DETECTION & RECOVERY</div>
+      <div class="ss-card" id="ss-fdir" style="border-color:rgba(0,200,240,0.3)">
+        <div class="ss-top"><span class="ss-name">FDIR Engine</span><span class="ss-st st-ok" id="st-fdir">WATCHING</span></div>
+        <div class="bar"><div class="bar-f bf-g" style="width:100%"></div></div>
+        <div class="ss-val" id="v-fdir">Events: 0 · Recoveries: 0</div>
+      </div>
+
+      <div class="sec-lbl">FLIGHT SOFTWARE SCHEDULER</div>
+      <div id="sched-list">
+        <div class="sched-task"><div class="task-dot" style="background:var(--green)"></div><span class="task-name">Telemetry collect</span><span class="task-interval">250ms</span><span class="task-status">●</span></div>
+        <div class="sched-task"><div class="task-dot" style="background:var(--green)"></div><span class="task-name">FDIR watchdog sweep</span><span class="task-interval">500ms</span><span class="task-status">●</span></div>
+        <div class="sched-task"><div class="task-dot" style="background:var(--green)"></div><span class="task-name">Power monitoring</span><span class="task-interval">1000ms</span><span class="task-status">●</span></div>
+        <div class="sched-task"><div class="task-dot" style="background:var(--green)"></div><span class="task-name">Command handler</span><span class="task-interval">100ms</span><span class="task-status">●</span></div>
+        <div class="sched-task"><div class="task-dot" style="background:var(--accent)"></div><span class="task-name">Telemetry downlink</span><span class="task-interval">5000ms</span><span class="task-status">●</span></div>
+        <div class="sched-task"><div class="task-dot" style="background:var(--text2)"></div><span class="task-name">Payload sensor read</span><span class="task-interval">2000ms</span><span class="task-status">●</span></div>
+        <div class="sched-task"><div class="task-dot" style="background:var(--text2)"></div><span class="task-name">Attitude update</span><span class="task-interval">200ms</span><span class="task-status">●</span></div>
+      </div>
+
+      <div class="sec-lbl">FAULT INJECTION</div>
+      <button class="fi-btn" onclick="injectFault('eps','Power System')">⚡ EPS — battery voltage drop</button>
+      <button class="fi-btn" onclick="injectFault('com','Communications')">⚡ Communications — signal loss</button>
+      <button class="fi-btn" onclick="injectFault('thm','Thermal Management')">⚡ Thermal — spike above limit</button>
+      <button class="fi-btn" onclick="injectFault('adcs','Attitude Control')">⚡ Attitude Control — tumble</button>
+      <button class="fi-btn fi-recover" onclick="recoverAll()">↺ Force recover all systems</button>
+    </div>
+  </div>
+
+  <!-- CENTER: FDIR + Telem -->
+  <div class="center-col pnl">
+
+    <!-- Key telemetry across top -->
+    <div class="telem-grid">
+      <div class="tval-box">
+        <div class="tval-lbl">BATTERY</div>
+        <div><span class="tval-num" id="tv-bat">78.2</span><span class="tval-unit">%</span></div>
+      </div>
+      <div class="tval-box">
+        <div class="tval-lbl">CORE TEMPERATURE</div>
+        <div><span class="tval-num" id="tv-temp">24.4</span><span class="tval-unit">°C</span></div>
+      </div>
+      <div class="tval-box">
+        <div class="tval-lbl">LINK SIGNAL</div>
+        <div><span class="tval-num" id="tv-rssi">-72</span><span class="tval-unit">dBm</span></div>
+      </div>
+      <div class="tval-box">
+        <div class="tval-lbl">CPU LOAD</div>
+        <div><span class="tval-num" id="tv-cpu">34</span><span class="tval-unit">%</span></div>
+      </div>
+    </div>
+
+    <!-- FDIR Panel -->
+    <div class="fdir-panel">
+      <div class="fdir-hdr">
+        <div>
+          <div class="fdir-title">FAULT DETECTION, ISOLATION & RECOVERY</div>
+          <div class="fdir-sub">Autonomous 7-stage recovery engine — continuously monitors all subsystems</div>
+        </div>
+        <div class="fdir-status" id="fdir-badge">● ARMED — WATCHING</div>
+      </div>
+
+      <div class="fdir-body">
+
+        <!-- Stats -->
+        <div class="fdir-stats">
+          <div class="fdir-stat"><div class="fdir-stat-val" id="fs-events">0</div><div class="fdir-stat-lbl">FAULT EVENTS</div></div>
+          <div class="fdir-stat"><div class="fdir-stat-val" id="fs-recoveries">0</div><div class="fdir-stat-lbl">RECOVERIES</div></div>
+          <div class="fdir-stat"><div class="fdir-stat-val" id="fs-time">0.0s</div><div class="fdir-stat-lbl">AVG RECOVERY TIME</div></div>
+          <div class="fdir-stat"><div class="fdir-stat-val" id="fs-rate" style="color:var(--green)">—</div><div class="fdir-stat-lbl">SUCCESS RATE</div></div>
+        </div>
+
+        <!-- Active recovery sequence — shown when fault in progress -->
+        <div class="recovery-seq" id="recovery-seq">
+          <div class="rs-title">
+            RECOVERY SEQUENCE — <span class="rs-system" id="rs-system">EPS</span>
+          </div>
+          <div class="rs-stages" id="rs-stages">
+            <!-- dynamically rendered -->
+          </div>
+          <div class="rs-progress"><div class="rs-progress-f" id="rs-prog" style="width:0%"></div></div>
+        </div>
+
+        <!-- Event log -->
+        <div class="event-log">
+          <div class="pnl-hdr" style="padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:6px">SYSTEM EVENT LOG</div>
+          <div class="log-rows" id="syslog"></div>
+        </div>
+
+        <!-- Command uplink -->
+        <div class="cmd-area">
+          <div class="cmd-lbl">COMMAND UPLINK — HERMES FLIGHT SOFTWARE</div>
+          <div class="cmd-row">
+            <span class="cmd-gt">&gt;</span>
+            <input class="cmd-in" id="cmdIn" placeholder="e.g. SET_MODE SAFE · RESET EPS · STATUS" onkeydown="if(event.key==='Enter')sendCmd()">
+            <button class="cmd-go" onclick="sendCmd()">TX ↑</button>
+          </div>
+          <div class="qcmds">
+            <div class="qc" onclick="qc('STATUS')">STATUS</div>
+            <div class="qc" onclick="qc('SET_MODE SAFE')">SAFE MODE</div>
+            <div class="qc" onclick="qc('RESET EPS')">RESET EPS</div>
+            <div class="qc" onclick="qc('RESET ADCS')">RESET ADCS</div>
+            <div class="qc" onclick="qc('REBOOT')">REBOOT</div>
+            <div class="qc" onclick="qc('FDIR STATUS')">FDIR STATUS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Full telemetry -->
+  <div class="pnl">
+    <div class="pnl-hdr">LIVE TELEMETRY</div>
+    <div class="pnl-body">
+      <canvas id="orbitCanvas"></canvas>
+
+      <div style="margin-top:8px">
+        <div class="trow"><span class="trow-lbl">Battery level</span><span><span class="trow-val" id="t-bat">78.2</span><span class="trow-unit">%</span></span></div>
+        <div class="trow"><span class="trow-lbl">Bus voltage</span><span><span class="trow-val" id="t-volt">3.94</span><span class="trow-unit">V</span></span></div>
+        <div class="trow"><span class="trow-lbl">Current draw</span><span><span class="trow-val" id="t-curr">420</span><span class="trow-unit">mA</span></span></div>
+        <div class="trow"><span class="trow-lbl">Core temperature</span><span><span class="trow-val" id="t-temp">24.4</span><span class="trow-unit">°C</span></span></div>
+        <div class="trow"><span class="trow-lbl">Link signal (RSSI)</span><span><span class="trow-val" id="t-rssi">-72</span><span class="trow-unit">dBm</span></span></div>
+        <div class="trow"><span class="trow-lbl">Signal noise ratio</span><span><span class="trow-val" id="t-snr">8.1</span><span class="trow-unit">dB</span></span></div>
+        <div class="trow"><span class="trow-lbl">CPU load</span><span><span class="trow-val" id="t-cpu">34</span><span class="trow-unit">%</span></span></div>
+        <div class="trow"><span class="trow-lbl">Roll</span><span><span class="trow-val" id="t-roll">0.3</span><span class="trow-unit">°</span></span></div>
+        <div class="trow"><span class="trow-lbl">Pitch</span><span><span class="trow-val" id="t-pitch">-1.2</span><span class="trow-unit">°</span></span></div>
+        <div class="trow"><span class="trow-lbl">Yaw</span><span><span class="trow-val" id="t-yaw">0.8</span><span class="trow-unit">°</span></span></div>
+        <div class="trow"><span class="trow-lbl">Pressure</span><span><span class="trow-val" id="t-press">101.2</span><span class="trow-unit">kPa</span></span></div>
+        <div class="trow"><span class="trow-lbl">Humidity</span><span><span class="trow-val" id="t-hum">42</span><span class="trow-unit">%RH</span></span></div>
+        <div class="trow"><span class="trow-lbl">Altitude</span><span><span class="trow-val" id="t-alt">401</span><span class="trow-unit">km</span></span></div>
+        <div class="trow"><span class="trow-lbl">Velocity</span><span><span class="trow-val" id="t-vel">7.66</span><span class="trow-unit">km/s</span></span></div>
+        <div class="trow"><span class="trow-lbl">Packets transmitted</span><span><span class="trow-val" id="t-pkts">0</span><span class="trow-unit">pkt</span></span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──
+let S={bat:78.2,volt:3.94,curr:420,temp:24.4,cpu:34,press:101.2,hum:42,roll:0.3,pitch:-1.2,yaw:0.8,pkts:0,metSecs:764,rssi:-72,snr:8.1,faults:{},fdirEvents:0,fdirRecoveries:0,totalRecoveryTime:0,mode:'NOMINAL',angle:0};
+let recoveryActive=false;
+
+function jit(v,a){return v+(Math.random()-0.5)*a;}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function p2(n){return String(Math.floor(n)).padStart(2,'0');}
+
+// ── MET ──
+setInterval(()=>{
+  S.metSecs++;
+  const d=Math.floor(S.metSecs/86400),h=Math.floor((S.metSecs%86400)/3600),m=Math.floor((S.metSecs%3600)/60),sc=S.metSecs%60;
+  document.getElementById('h-met').textContent=`${String(d).padStart(3,'0')}:${p2(h)}:${p2(m)}:${p2(sc)}`;
+},1000);
+
+// ── Orbit mini canvas ──
+const oc=document.getElementById('orbitCanvas');
+const octx=oc.getContext('2d');
+let oa=0;
+function resizeOC(){oc.width=oc.offsetWidth;oc.height=oc.offsetHeight;}
+resizeOC();
+
+function drawOrbit(ts){
+  oa+=0.0006;
+  const W=oc.width,H=oc.height,cx=W/2,cy=H/2,rx=W*0.36,ry=H*0.28;
+  octx.clearRect(0,0,W,H);
+  octx.fillStyle='#06050c';octx.fillRect(0,0,W,H);
+  // orbit path
+  octx.setLineDash([3,6]);octx.strokeStyle='rgba(245,166,35,0.18)';octx.lineWidth=1;
+  octx.beginPath();octx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2);octx.stroke();octx.setLineDash([]);
+  // earth
+  const eg=octx.createRadialGradient(cx,cy,0,cx,cy,H*0.22);
+  eg.addColorStop(0,'#0e1a2e');eg.addColorStop(0.7,'#091018');eg.addColorStop(1,'#06050c');
+  octx.beginPath();octx.arc(cx,cy,H*0.22,0,Math.PI*2);octx.fillStyle=eg;octx.fill();
+  octx.beginPath();octx.arc(cx,cy,H*0.22,0,Math.PI*2);
+  octx.strokeStyle='rgba(61,220,132,0.15)';octx.lineWidth=1;octx.stroke();
+  // satellite
+  const sx=cx+rx*Math.cos(oa),sy=cy+ry*Math.sin(oa);
+  const satColor=S.faults.com?'rgba(255,71,87,0.9)':'rgba(245,166,35,0.9)';
+  octx.save();octx.translate(sx,sy);octx.rotate(oa+Math.PI/2);
+  octx.fillStyle='rgba(30,80,180,0.5)';octx.strokeStyle='rgba(80,140,255,0.45)';octx.lineWidth=0.7;
+  octx.fillRect(-8,-1.2,4,2.4);octx.strokeRect(-8,-1.2,4,2.4);
+  octx.fillRect(4,-1.2,4,2.4);octx.strokeRect(4,-1.2,4,2.4);
+  octx.fillStyle='#1e1b2e';octx.strokeStyle=satColor;octx.lineWidth=1;
+  octx.fillRect(-2.5,-2.5,5,5);octx.strokeRect(-2.5,-2.5,5,5);
+  octx.restore();
+  // trail
+  for(let i=1;i<=20;i++){
+    const ta=oa-i*0.025;
+    octx.beginPath();octx.arc(cx+rx*Math.cos(ta),cy+ry*Math.sin(ta),0.9,0,Math.PI*2);
+    octx.fillStyle=`rgba(245,166,35,${0.22*(1-i/20)})`;octx.fill();
+  }
+  requestAnimationFrame(drawOrbit);
+}
+requestAnimationFrame(drawOrbit);
+
+// ── Telemetry ──
+function updateTelem(){
+  if(!S.faults.eps){S.bat=clamp(jit(S.bat,0.08),10,100);S.volt=clamp(jit(S.volt,0.015),3.0,4.2);S.curr=clamp(jit(S.curr,8),80,700);}
+  if(!S.faults.thm){S.temp=clamp(jit(S.temp,0.18),-20,65);}
+  if(!S.faults.com){S.rssi=clamp(jit(S.rssi,2),-120,-40);S.snr=clamp(jit(S.snr,0.3),0,12);}
+  S.cpu=clamp(jit(S.cpu,2.5),5,95);
+  S.press=clamp(jit(S.press,0.2),98,105);S.hum=clamp(jit(S.hum,0.3),30,70);
+  if(!S.faults.adcs){S.roll=clamp(jit(S.roll,0.12),-5,5);S.pitch=clamp(jit(S.pitch,0.12),-5,5);S.yaw=clamp(jit(S.yaw,0.12),-5,5);}
+  S.pkts++;
+
+  // top 4
+  setColor('tv-bat',S.bat.toFixed(1),S.bat<20?'r':S.bat<40?'a':'w');
+  setColor('tv-temp',S.temp.toFixed(1),S.temp>55?'r':S.temp>45?'a':'w');
+  set('tv-rssi',Math.round(S.rssi));set('tv-cpu',Math.round(S.cpu));
+
+  // right column
+  setColor('t-bat',S.bat.toFixed(1),S.bat<20?'r':S.bat<40?'a':'w');
+  set('t-volt',S.volt.toFixed(2));set('t-curr',Math.round(S.curr));
+  setColor('t-temp',S.temp.toFixed(1),S.temp>55?'r':S.temp>45?'a':'w');
+  set('t-rssi',Math.round(S.rssi));set('t-snr',S.snr.toFixed(1));
+  set('t-cpu',Math.round(S.cpu));set('t-roll',S.roll.toFixed(1));
+  set('t-pitch',S.pitch.toFixed(1));set('t-yaw',S.yaw.toFixed(1));
+  set('t-press',S.press.toFixed(1));set('t-hum',Math.round(S.hum));
+  const alt=400+Math.sin(S.angle)*12;
+  set('t-alt',alt.toFixed(0));set('t-vel',(7.66+Math.cos(S.angle)*0.02).toFixed(2));
+  set('t-pkts',S.pkts);S.angle+=0.003;
+
+  // subsystems
+  updSS();
+}
+setInterval(updateTelem,900);
+
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function setColor(id,v,c){const e=document.getElementById(id);if(!e)return;e.textContent=v;e.style.color=c==='r'?'var(--red)':c==='a'?'var(--amber)':'var(--white)';}
+
+function updSS(){
+  ssU('eps',S.faults.eps?'FAULT':S.bat<20?'CRITICAL':S.bat<40?'LOW':'NOMINAL',
+    S.faults.eps?'fault':S.bat<20?'fault':S.bat<40?'warn':'ok',
+    S.bat,S.faults.eps?'bf-r':S.bat<40?'bf-a':'bf-g',
+    `${S.bat.toFixed(0)}% · ${S.volt.toFixed(2)}V · ${Math.round(S.curr)}mA`);
+  ssU('obc','RUNNING','ok',S.cpu,'bf-b',`CPU ${Math.round(S.cpu)}% · Scheduler active`);
+  ssU('com',S.faults.com?'SIGNAL LOSS':'TX / RX OK',S.faults.com?'fault':'ok',
+    Math.max(0,(S.rssi+120)/80*100),'bf-b',`LoRa ${Math.round(S.rssi)}dBm · SNR ${S.snr.toFixed(1)}dB`);
+  ssU('adcs',S.faults.adcs?'TUMBLE DETECTED':'STABLE',S.faults.adcs?'fault':'ok',
+    S.faults.adcs?8:94,S.faults.adcs?'bf-r':'bf-g',
+    `Roll ${S.roll.toFixed(1)}° · Pitch ${S.pitch.toFixed(1)}° · Yaw ${S.yaw.toFixed(1)}°`);
+  ssU('thm',S.faults.thm?'OVERHEAT':S.temp>50?'WARNING':'NOMINAL',
+    S.faults.thm?'fault':S.temp>50?'warn':'ok',
+    clamp((S.temp+20)/85*100,0,100),S.temp>50?'bf-r':'bf-a',`Core ${S.temp.toFixed(1)}°C · Within limits`);
+  set('v-fdir',`Events: ${S.fdirEvents} · Recoveries: ${S.fdirRecoveries}`);
+  set('fs-events',S.fdirEvents);set('fs-recoveries',S.fdirRecoveries);
+  const avg=S.fdirRecoveries>0?(S.totalRecoveryTime/S.fdirRecoveries).toFixed(1)+'s':'—';
+  set('fs-time',avg);  set('fs-rate',S.fdirEvents>0?Math.round((S.fdirRecoveries/S.fdirEvents)*100)+'%':'—');
+}
+
+function ssU(id,stTxt,stCls,pct,barCls,valTxt){
+  const c=document.getElementById('ss-'+id),st=document.getElementById('st-'+id),bar=document.getElementById('bar-'+id),val=document.getElementById('v-'+id);
+  if(!c)return;
+  c.className='ss-card '+(stCls==='fault'?'fault':stCls==='warn'?'warn':'');
+  if(st){st.textContent=stTxt;st.className='ss-st st-'+stCls;}
+  if(bar){bar.style.width=clamp(pct,0,100)+'%';bar.className='bar-f '+barCls;}
+  if(val)val.textContent=valTxt;
+}
+
+// ── Log ──
+const logEl=document.getElementById('syslog');
+function addLog(src,msg,type=''){
+  const d=Math.floor(S.metSecs/86400),h=Math.floor((S.metSecs%86400)/3600),m=Math.floor((S.metSecs%3600)/60),sc=S.metSecs%60;
+  const ts=`${String(d).padStart(3,'0')}:${p2(h)}:${p2(m)}:${p2(sc)}`;
+  const row=document.createElement('div');row.className='log-row';
+  row.innerHTML=`<span class="lr-t">${ts}</span><span class="lr-s">${src}</span><span class="lr-m ${type}">${msg}</span>`;
+  logEl.insertBefore(row,logEl.firstChild);
+  if(logEl.children.length>100)logEl.removeChild(logEl.lastChild);
+}
+
+const tlmMsgs=[
+  ['Telemetry','Housekeeping frame downlinked','ok'],
+  ['Scheduler','All 7 tasks executed — cycle complete','ok'],
+  ['FDIR','Watchdog sweep complete — all clear','ok'],
+  ['Communications','LoRa beacon transmitted','ok'],
+  ['Payload','Sensor sweep complete — data stored','ok'],
+  ['Power System','Solar charging nominal — 118mA in','ok'],
+  ['Attitude','Pointing within tolerance','ok'],
+];
+setInterval(()=>{const m=tlmMsgs[Math.floor(Math.random()*tlmMsgs.length)];addLog(m[0],m[1],m[2]);},3200);
+
+addLog('System','HERMES flight software boot complete','ok');
+addLog('FDIR','Fault detection engine armed — 6 subsystems under watch','ok');
+addLog('Scheduler','7 tasks registered — first cycle complete','ok');
+addLog('Communications','LoRa link established · Ground station Dublin · -72dBm','ok');
+
+// ── FDIR Recovery Sequence ──
+const STAGES=[
+  {label:'Anomaly Detected',icon:'🔴',detail:'Threshold breach confirmed on subsystem telemetry stream. Fault flag raised. Initiating isolation protocol.',cls:'fault-st'},
+  {label:'Subsystem Isolated',icon:'🟡',detail:'Subsystem load shed. Non-critical functions suspended. Propagation to other subsystems prevented.',cls:'current'},
+  {label:'Safe State Entry',icon:'🟡',detail:'Satellite placed in safe mode. Minimum power configuration. Non-essential payloads powered down.',cls:'current'},
+  {label:'Diagnostic Sweep',icon:'🟡',detail:'Root cause analysis executing. Scanning telemetry history, threshold logs and hardware registers.',cls:'current'},
+  {label:'Recovery Procedure',icon:'🟡',detail:'Executing recovery sequence for identified fault class. Staged power-cycle and re-initialisation.',cls:'current'},
+  {label:'Post-Recovery Verification',icon:'🟢',detail:'Health checks passing. Comparing recovered telemetry against nominal baseline values.',cls:'done'},
+  {label:'Restored to Nominal',icon:'🟢',detail:'Subsystem fully operational. FDIR returning to watch state. Incident logged.',cls:'done'},
+];
+
+function renderStages(currentIdx){
+  const el=document.getElementById('rs-stages');
+  el.innerHTML='';
+  STAGES.forEach((st,i)=>{
+    let cls='';
+    if(i<currentIdx)cls='done';
+    else if(i===currentIdx)cls=currentIdx===0?'fault-st':'current';
+    else cls='';
+    const div=document.createElement('div');
+    div.className='rs-stage '+cls;
+    div.id='rs-stage-'+i;
+    div.innerHTML=`<span class="rs-num">${i+1}</span><div style="flex:1"><div style="display:flex;align-items:center;gap:8px"><span class="rs-icon">${st.icon}</span><span class="rs-label">${st.label}</span></div><div class="rs-detail">${st.detail}</div></div>`;
+    el.appendChild(div);
+  });
+  const pct=Math.round((currentIdx/(STAGES.length-1))*100);
+  document.getElementById('rs-prog').style.width=pct+'%';
+}
+
+function runRecovery(sysName,sysKey){
+  if(recoveryActive)return;
+  recoveryActive=true;
+  const startTime=Date.now();
+  const seqEl=document.getElementById('recovery-seq');
+  seqEl.classList.add('active');
+  document.getElementById('rs-system').textContent=sysName.toUpperCase();
+  renderStages(0);
+
+  // Update FDIR badge
+  document.getElementById('fdir-badge').textContent='⚠ RECOVERY IN PROGRESS';
+  document.getElementById('fdir-badge').style.borderColor='var(--amber)';
+  document.getElementById('fdir-badge').style.color='var(--amber)';
+  document.getElementById('fdir-badge').style.background='var(--amber-dim)';
+
+  const delays=[0,1400,2800,4200,6500,9000,11000];
+  const logMessages=[
+    (sys)=>[`FDIR`,`FAULT DETECTED — ${sys} telemetry out of bounds`,'fault'],
+    (sys)=>[`FDIR`,`${sys} isolated — loads shed, propagation contained`,'warn'],
+    ()=>[`System`,`Safe mode entered — minimum power configuration active`,'warn'],
+    (sys)=>[`FDIR`,`Diagnostic sweep running — scanning ${sys} register history`,'warn'],
+    (sys)=>[`FDIR`,`Recovery procedure executing — staged restart of ${sys}`,'warn'],
+    (sys)=>[`FDIR`,`Post-recovery verification — ${sys} health checks passing`,'ok'],
+    (sys)=>[`FDIR`,`${sys} restored to nominal — incident logged — watch resumed`,'ok'],
+  ];
+
+  delays.forEach((delay,i)=>{
+    setTimeout(()=>{
+      renderStages(i);
+      const m=logMessages[i](sysName);
+      addLog(m[0],m[1],m[2]);
+      if(i===6){
+        // Recovery complete
+        setTimeout(()=>{
+          S.faults[sysKey]=false;
+          S.fdirRecoveries++;
+          S.totalRecoveryTime+=(Date.now()-startTime)/1000;
+          if(sysKey==='eps'){S.bat=Math.max(S.bat,50);S.volt=3.75;}
+          if(sysKey==='com'){S.rssi=-88;}
+          if(sysKey==='thm'){S.temp=36;}
+          if(sysKey==='adcs'){S.roll=0;S.pitch=0;S.yaw=0;}
+          recoveryActive=false;
+          seqEl.classList.remove('active');
+          document.getElementById('fdir-badge').textContent='● ARMED — WATCHING';
+          document.getElementById('fdir-badge').style.borderColor='var(--green)';
+          document.getElementById('fdir-badge').style.color='var(--green)';
+          document.getElementById('fdir-badge').style.background='var(--green-dim)';
+          setPill('pill-sys','ok','SYSTEM NOMINAL');
+          setPill('pill-fdir','ok','FDIR ARMED');
+          addLog('FDIR','Recovery sequence complete — all systems nominal','ok');
+        },1500);
+      }
+    },delay);
+  });
+}
+
+function setPill(id,cls,label){
+  const el=document.getElementById(id);if(!el)return;
+  el.className='pill '+cls;el.innerHTML=`<span class="dot"></span>${label}`;
+}
+
+function injectFault(sysKey,sysName){
+  if(S.faults[sysKey]||recoveryActive)return;
+  S.faults[sysKey]=true;
+  S.fdirEvents++;
+  if(sysKey==='eps'){S.bat=18;S.volt=2.9;}
+  if(sysKey==='com'){S.rssi=-118;}
+  if(sysKey==='thm'){S.temp=68;}
+  if(sysKey==='adcs'){S.roll=42;S.pitch=-38;S.yaw=19;}
+  setPill('pill-sys','fault','SUBSYSTEM FAULT');
+  setPill('pill-fdir','warn','FDIR ACTIVE');
+  addLog('SYSTEM',`⚠ FAULT INJECTED — ${sysName.toUpperCase()}`,'fault');
+  setTimeout(()=>runRecovery(sysName,sysKey),800);
+}
+
+function recoverAll(){
+  Object.keys(S.faults).forEach(k=>{S.faults[k]=false;});
+  S.bat=75;S.volt=3.9;S.temp=24;S.rssi=-72;S.roll=0;S.pitch=0;S.yaw=0;
+  recoveryActive=false;
+  document.getElementById('recovery-seq').classList.remove('active');
+  document.getElementById('fdir-badge').textContent='● ARMED — WATCHING';
+  document.getElementById('fdir-badge').style.borderColor='var(--green)';
+  document.getElementById('fdir-badge').style.color='var(--green)';
+  document.getElementById('fdir-badge').style.background='var(--green-dim)';
+  setPill('pill-sys','ok','SYSTEM NOMINAL');
+  setPill('pill-fdir','ok','FDIR ARMED');
+  addLog('Ground','Manual force-recover command received — all systems reset','cmd');
+  addLog('FDIR','Recovery override complete — returning to watch state','ok');
+}
+
+function setMode(btn,mode){
+  document.querySelectorAll('.mbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');S.mode=mode;
+  addLog('Scheduler',`Flight mode transition → ${mode}`,'cmd');
+  if(mode==='SAFE'){addLog('System','Non-essential loads shed — beacon only mode','warn');}
+  if(mode==='ECLIPSE'){addLog('Power System','Eclipse entry — solar input zero, battery only','warn');S.bat=Math.min(S.bat,55);}
+  if(mode==='LOW POWER'){addLog('Power System','Low power mode active — payload suspended','warn');}
+}
+
+function qc(c){document.getElementById('cmdIn').value=c;sendCmd();}
+function sendCmd(){
+  const inp=document.getElementById('cmdIn');
+  const cmd=inp.value.trim().toUpperCase();
+  if(!cmd)return;inp.value='';
+  addLog('Ground',`UPLINK: ${cmd}`,'cmd');
+  setTimeout(()=>{
+    if(cmd==='STATUS'){addLog('System',`Mode: ${S.mode} · Battery: ${S.bat.toFixed(0)}% · Temp: ${S.temp.toFixed(1)}°C · FDIR: ${recoveryActive?'RECOVERY':'WATCHING'}`,'ok');}
+    else if(cmd.startsWith('RESET')){const s=cmd.split(' ')[1]||'';addLog('System',`Reset acknowledged — ${s}`,'ok');}
+    else if(cmd.startsWith('SET_MODE')){addLog('System',`Mode change acknowledged → ${cmd.split(' ')[1]||'?'}`,'ok');}
+    else if(cmd==='REBOOT'){addLog('System','Warm restart in 5 seconds','warn');setTimeout(()=>addLog('System','Warm restart complete — all systems re-initialised','ok'),5000);}
+    else if(cmd==='FDIR STATUS'){addLog('FDIR',`Events: ${S.fdirEvents} · Recoveries: ${S.fdirRecoveries} · Active: ${recoveryActive}`,'ok');}
+    else{addLog('System',`Unknown command: ${cmd} — rejected`,'warn');}
+  },600);
+}
+</script>
+</body>
+</html>

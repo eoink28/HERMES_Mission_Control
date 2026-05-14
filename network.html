@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HERMES — Ground Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#08070d;--bg1:#0e0d16;--bg2:#13111c;--bg3:#1a1826;
+  --panel:#12111b;--border:#1e1c2e;--border2:#2a2740;
+  --accent:#f5a623;--accent-dim:rgba(245,166,35,0.1);
+  --green:#3ddc84;--green-dim:rgba(61,220,132,0.08);
+  --amber:#f5a623;--amber2:#e8890a;--amber-dim:rgba(245,166,35,0.1);
+  --red:#ff4757;--red-dim:rgba(255,71,87,0.08);
+  --purple:#8866ff;
+  --bg0:#06050c;--text:#9e9a88;--text2:#4a4760;--text3:#252338;--white:#f0ece0;
+  --mono:'Share Tech Mono',monospace;--head:'Bebas Neue',sans-serif;--body:'Barlow',sans-serif;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--white);font-family:var(--body);font-size:12px;display:flex;flex-direction:column;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;opacity:0.5;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E")}
+
+/* HEADER */
+.hdr{height:70px;background:var(--bg1);border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;padding:0 32px;flex-shrink:0;position:relative;z-index:100}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber),transparent);opacity:0.2}
+.patch{width:50px;height:50px;border-radius:50%;border:2px solid var(--amber2);background:radial-gradient(circle at 38% 32%, #1e1b2e, #08070d);display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0;box-shadow:0 0 20px rgba(245,166,35,0.18), inset 0 0 10px rgba(245,166,35,0.04)}
+.patch::before{content:'';position:absolute;inset:4px;border-radius:50%;border:1px solid rgba(245,166,35,0.18)}
+.patch::after{content:'';position:absolute;inset:7px;border-radius:50%;border:1px dashed rgba(245,166,35,0.1)}
+.patch-inner{display:flex;flex-direction:column;align-items:center;gap:1px;position:relative;z-index:1}
+.patch-icon{font-size:15px;filter:drop-shadow(0 0 5px rgba(245,166,35,0.6))}
+.patch-text{font-family:var(--head);font-size:10px;letter-spacing:0.2em;color:var(--amber);line-height:1}
+.hdr-brand{display:flex;align-items:center;gap:14px}
+.brand-title{font-family:var(--head);font-size:30px;letter-spacing:0.15em;color:var(--white);line-height:1}
+.brand-sub{font-family:var(--mono);font-size:8px;letter-spacing:0.16em;color:var(--text2);margin-top:3px}
+.hdr-centre{display:flex;align-items:center;gap:20px}
+.flag-grp{display:flex;align-items:center;gap:8px}
+.flag-lbl{font-family:var(--mono);font-size:8px;letter-spacing:0.12em;color:var(--text2)}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.pill{font-family:var(--mono);font-size:8px;letter-spacing:0.1em;padding:4px 10px;border:1px solid;display:flex;align-items:center;gap:5px;background:var(--bg);color:var(--text2)}
+.pill.ok{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.pill.warn{border-color:var(--amber);color:var(--amber);background:var(--amber-dim)}
+.dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:dblink 1.8s ease-in-out infinite}
+@keyframes dblink{0%,100%{opacity:1}50%{opacity:0.15}}
+.nav{display:flex;gap:0}
+.nav a{font-family:var(--mono);font-size:9px;letter-spacing:0.12em;padding:8px 18px;background:var(--bg);border:1px solid var(--border2);color:var(--text2);text-decoration:none;transition:all 0.2s;margin-left:-1px}
+.nav a:hover{border-color:rgba(245,166,35,0.4);color:var(--amber);background:rgba(245,166,35,0.05);z-index:1}
+.nav a.active{border-color:var(--amber);color:var(--bg1);background:var(--amber2);z-index:1}
+.flag{height:20px;border:1px solid var(--border2);overflow:hidden;display:flex;flex-shrink:0}
+.flag-ie{width:32px}
+.flag-ie .s1{flex:1;background:#169B62}.flag-ie .s2{flex:1;background:#f0ece0}.flag-ie .s3{flex:1;background:#FF883E}
+.flag-esa{width:44px;background:#003399;align-items:center;justify-content:center}
+.flag-esa span{font-family:var(--mono);font-size:7px;color:white;letter-spacing:0.1em}
+
+/* LAYOUT */
+.workspace{flex:1;display:grid;grid-template-columns:1fr 260px;grid-template-rows:1fr 200px;gap:1px;background:var(--border);overflow:hidden}
+.pnl{background:var(--panel);overflow:hidden;display:flex;flex-direction:column}
+.pnl-hdr{font-family:var(--mono);font-size:8px;letter-spacing:0.2em;color:var(--text2);padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;gap:6px;flex-shrink:0}
+.pnl-hdr::before{content:'';width:3px;height:9px;background:var(--accent);opacity:0.4}
+.pnl-body{padding:10px 12px;overflow-y:auto;flex:1}
+.pnl-body::-webkit-scrollbar{width:3px}
+.pnl-body::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* MAP */
+.map-pnl{grid-column:1;grid-row:1;position:relative;background:var(--bg1)}
+#mapCanvas{display:block;width:100%;height:100%}
+.map-overlay{position:absolute;inset:0;pointer-events:none;z-index:5}
+.mo-tl{position:absolute;top:12px;left:14px;font-family:var(--mono);font-size:9px;color:var(--text2);line-height:2;letter-spacing:0.1em}
+.mo-tr{position:absolute;top:12px;right:14px;font-family:var(--mono);font-size:9px;color:var(--text2);line-height:2;letter-spacing:0.1em;text-align:right}
+.mo-val{color:var(--accent)}
+.mo-val-g{color:var(--green)}
+
+/* RIGHT PANEL */
+.right-pnl{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;gap:1px;background:var(--border)}
+
+/* Ground station card */
+.gs-card{background:var(--panel);border:1px solid var(--border);padding:10px 12px;transition:all 0.4s;position:relative;overflow:hidden;flex-shrink:0}
+.gs-card.active{border-color:var(--green);background:rgba(0,255,136,0.04)}
+.gs-card.active::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--green);animation:scan 2.4s linear infinite}
+@keyframes scan{0%{opacity:1;transform:scaleX(0);transform-origin:left}60%{opacity:1;transform:scaleX(1)}100%{opacity:0}}
+.gs-card.handover{animation:hofl 0.5s ease-in-out 2}
+@keyframes hofl{0%,100%{border-color:var(--amber)}50%{border-color:white;background:rgba(255,170,0,0.08)}}
+.gs-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.gs-name{font-family:var(--head);font-size:13px;font-weight:600;letter-spacing:0.1em;color:var(--white);line-height:1.1}
+.gs-country{font-family:var(--mono);font-size:8px;color:var(--text2);margin-top:1px}
+.gs-role{font-family:var(--mono);font-size:7px;letter-spacing:0.08em;padding:2px 6px;border:1px solid var(--border2);color:var(--text2)}
+.gs-card.active .gs-role{border-color:var(--green);color:var(--green)}
+.rssi-bar{height:3px;background:var(--bg0);border-radius:1px;overflow:hidden;margin-bottom:5px}
+.rssi-f{height:100%;border-radius:1px;transition:width 0.9s ease;background:var(--accent)}
+.gs-card.active .rssi-f{background:var(--green)}
+.rssi-f.weak{background:var(--amber)}
+.rssi-f.dead{background:var(--red)}
+.gs-vals{display:flex;gap:12px}
+.gs-v{font-family:var(--mono);font-size:9px}
+.gs-v-lbl{color:var(--text2)}
+.gs-v-num{color:var(--white)}
+
+/* Network stats */
+.net-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px}
+.ns{background:var(--bg2);border:1px solid var(--border);padding:6px 8px;text-align:center}
+.ns-val{font-family:var(--head);font-size:18px;font-weight:500;color:var(--white);line-height:1;margin-bottom:1px}
+.ns-lbl{font-family:var(--mono);font-size:7px;color:var(--text2);letter-spacing:0.1em}
+
+/* Handover log */
+.ho-entry{display:flex;gap:8px;font-family:var(--mono);font-size:9px;padding:3px 0;border-bottom:1px solid var(--border);animation:lrin 0.3s ease;line-height:1.5}
+@keyframes lrin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.ho-t{color:var(--text3);min-width:58px;flex-shrink:0}
+.ho-m{color:var(--text)}
+.ho-m.ok{color:var(--green)}.ho-m.warn{color:var(--amber)}.ho-m.info{color:var(--accent)}
+.ho-scroll{height:90px;overflow-y:auto}
+.ho-scroll::-webkit-scrollbar{width:2px}
+.ho-scroll::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* BOTTOM: telemetry + algo */
+.bottom-left{grid-column:1;grid-row:2;background:var(--panel);display:flex;gap:1px;background:var(--border)}
+.telem-strip{background:var(--panel);flex:1;padding:10px 14px}
+.tstrip-lbl{font-family:var(--mono);font-size:7px;letter-spacing:0.18em;color:var(--text2);margin-bottom:7px}
+.tstrip-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:4px 10px}
+.tsv{display:flex;flex-direction:column}
+.tsv-lbl{font-family:var(--mono);font-size:7px;color:var(--text2);letter-spacing:0.1em;margin-bottom:2px}
+.tsv-num{font-family:var(--head);font-size:20px;font-weight:500;color:var(--white);line-height:1;transition:color 0.3s}
+.tsv-unit{font-family:var(--mono);font-size:7px;color:var(--text2)}
+
+.algo-panel{background:var(--panel);width:260px;flex-shrink:0;padding:10px 12px}
+.algo-lbl{font-family:var(--mono);font-size:7px;letter-spacing:0.18em;color:var(--text2);margin-bottom:8px}
+.algo-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:9px}
+.algo-node{min-width:60px;color:var(--text)}
+.algo-rssi{flex:1}
+.algo-rssi-bar{height:3px;background:var(--bg0);border-radius:1px;overflow:hidden}
+.algo-rssi-f{height:100%;border-radius:1px;background:var(--accent);transition:width 0.8s}
+.algo-row.winner .algo-rssi-f{background:var(--green)}
+.algo-row.winner .algo-node{color:var(--green);font-weight:bold}
+.algo-decision{margin-top:8px;background:var(--bg2);border:1px solid var(--border2);padding:7px 9px;font-family:var(--mono);font-size:8px;line-height:1.8;color:var(--text2)}
+.algo-decision .highlight{color:var(--green)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="patch">
+      <div class="patch-inner">
+        <div class="patch-icon">◈</div>
+        <div class="patch-text">HERMES</div>
+      </div>
+    </div>
+    <div>
+      <div class="brand-title">HERMES</div>
+      <div class="brand-sub">GROUND NETWORK · DISTRIBUTED TRACKING STATIONS</div>
+    </div>
+  </div>
+
+  <div class="hdr-centre">
+    <div class="flag-grp">
+      <div class="flag flag-ie"><div class="s1"></div><div class="s2"></div><div class="s3"></div></div>
+      <span class="flag-lbl">TU DUBLIN</span>
+    </div>
+    <div class="flag-grp">
+      <div class="flag flag-esa"><span>ESA</span></div>
+      <span class="flag-lbl">ESA PARTNER</span>
+    </div>
+  </div>
+
+  <div class="hdr-r">
+    <nav class="nav">
+      <a href="Space/index.html">HOME</a>
+      <a href="flight.html">FLIGHT SOFTWARE</a>
+      <a href="network.html" class="active">GROUND NETWORK</a>
+    </nav>
+    <div class="pill ok" id="pill-net"><span class="dot"></span>4 NODES ONLINE</div>
+    <div class="pill ok" id="pill-broker"><span class="dot"></span>MQTT BROKER</div>
+    <div class="pill ok"><span class="dot"></span><span id="h-met">000:00:12:44</span></div>
+  </div>
+</header>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- MAP -->
+  <div class="map-pnl">
+    <canvas id="mapCanvas"></canvas>
+    <div class="map-overlay">
+      <div class="mo-tl">
+        <div>ALT <span class="mo-val" id="ov-alt">401 km</span></div>
+        <div>VEL <span class="mo-val" id="ov-vel">7.66 km/s</span></div>
+        <div>ORBIT <span class="mo-val">#012</span></div>
+        <div>INCLINATION <span class="mo-val">97.4°</span></div>
+      </div>
+      <div class="mo-tr">
+        <div>ACTIVE STATION <span class="mo-val-g" id="ov-active">Dublin</span></div>
+        <div>HANDOVERS <span class="mo-val" id="ov-ho">0</span></div>
+        <div>DATA LOSS <span class="mo-val-g" id="ov-dl">0.00%</span></div>
+        <div>COVERAGE <span class="mo-val">±10° footprint</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Station cards -->
+  <div class="right-pnl">
+    <!-- Station cards -->
+    <div style="background:var(--panel);flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px">
+      <div class="pnl-hdr" style="margin:-10px -12px 8px;padding:8px 12px">TRACKING STATIONS</div>
+
+      <div class="gs-card active" id="gs-0">
+        <div class="gs-top">
+          <div><div class="gs-name">Dublin</div><div class="gs-country">Ireland · 53.33°N 6.25°W — EU Primary</div></div>
+          <div class="gs-role" id="role-0">PRIMARY HUB</div>
+        </div>
+        <div class="rssi-bar"><div class="rssi-f" id="rssi-0" style="width:82%"></div></div>
+        <div class="gs-vals">
+          <span class="gs-v"><span class="gs-v-lbl">RSSI </span><span class="gs-v-num" id="rv-0">-72dBm</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">SNR </span><span class="gs-v-num" id="snr-0">8.1dB</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">Packets </span><span class="gs-v-num" id="pkt-0">0</span></span>
+        </div>
+      </div>
+
+      <div class="gs-card" id="gs-1">
+        <div class="gs-top">
+          <div><div class="gs-name">Johannesburg</div><div class="gs-country">South Africa · 26.20°S 28.04°E — ESA Partner</div></div>
+          <div class="gs-role" id="role-1">STANDBY</div>
+        </div>
+        <div class="rssi-bar"><div class="rssi-f" id="rssi-1" style="width:44%"></div></div>
+        <div class="gs-vals">
+          <span class="gs-v"><span class="gs-v-lbl">RSSI </span><span class="gs-v-num" id="rv-1">-95dBm</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">SNR </span><span class="gs-v-num" id="snr-1">3.2dB</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">Packets </span><span class="gs-v-num" id="pkt-1">0</span></span>
+        </div>
+      </div>
+
+      <div class="gs-card" id="gs-2">
+        <div class="gs-top">
+          <div><div class="gs-name">New Norcia</div><div class="gs-country">Australia · 31.05°S 116.19°E — ESA Deep Space</div></div>
+          <div class="gs-role" id="role-2">STANDBY</div>
+        </div>
+        <div class="rssi-bar"><div class="rssi-f weak" id="rssi-2" style="width:25%"></div></div>
+        <div class="gs-vals">
+          <span class="gs-v"><span class="gs-v-lbl">RSSI </span><span class="gs-v-num" id="rv-2">-104dBm</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">SNR </span><span class="gs-v-num" id="snr-2">1.1dB</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">Packets </span><span class="gs-v-num" id="pkt-2">0</span></span>
+        </div>
+      </div>
+
+      <div class="gs-card" id="gs-3">
+        <div class="gs-top">
+          <div><div class="gs-name">Malargüe</div><div class="gs-country">Argentina · 35.77°S 69.40°W — ESA Deep Space</div></div>
+          <div class="gs-role" id="role-3">STANDBY</div>
+        </div>
+        <div class="rssi-bar"><div class="rssi-f weak" id="rssi-3" style="width:16%"></div></div>
+        <div class="gs-vals">
+          <span class="gs-v"><span class="gs-v-lbl">RSSI </span><span class="gs-v-num" id="rv-3">-109dBm</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">SNR </span><span class="gs-v-num" id="snr-3">0.4dB</span></span>
+          <span class="gs-v"><span class="gs-v-lbl">Packets </span><span class="gs-v-num" id="pkt-3">0</span></span>
+        </div>
+      </div>
+
+      <!-- Network stats -->
+      <div style="margin-top:4px">
+        <div class="pnl-hdr" style="padding:6px 0;border:none;margin-bottom:6px">NETWORK STATUS</div>
+        <div class="net-stats">
+          <div class="ns"><div class="ns-val" id="ns-ho">0</div><div class="ns-lbl">HANDOVERS</div></div>
+          <div class="ns"><div class="ns-val" style="color:var(--green)">0.00%</div><div class="ns-lbl">DATA LOSS</div></div>
+          <div class="ns"><div class="ns-val" style="color:var(--green)">ONLINE</div><div class="ns-lbl">MQTT BROKER</div></div>
+          <div class="ns"><div class="ns-val" style="color:var(--green)">SYNC</div><div class="ns-lbl">REDIS STATE</div></div>
+        </div>
+      </div>
+
+      <!-- Handover log -->
+      <div>
+        <div class="pnl-hdr" style="padding:6px 0;border:none;margin-bottom:5px">HANDOVER LOG</div>
+        <div class="ho-scroll" id="ho-log">
+          <div class="ho-entry"><span class="ho-t">T+000:00:00</span><span class="ho-m info">Network online — Dublin selected as primary</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM LEFT: Telemetry + Handover algorithm -->
+  <div class="bottom-left">
+    <div class="telem-strip">
+      <div class="tstrip-lbl">SATELLITE TELEMETRY</div>
+      <div class="tstrip-grid">
+        <div class="tsv"><span class="tsv-lbl">BATTERY</span><span class="tsv-num" id="ts-bat">78.2</span><span class="tsv-unit">%</span></div>
+        <div class="tsv"><span class="tsv-lbl">VOLTAGE</span><span class="tsv-num" id="ts-volt">3.94</span><span class="tsv-unit">V</span></div>
+        <div class="tsv"><span class="tsv-lbl">TEMPERATURE</span><span class="tsv-num" id="ts-temp">24.4</span><span class="tsv-unit">°C</span></div>
+        <div class="tsv"><span class="tsv-lbl">ALTITUDE</span><span class="tsv-num" id="ts-alt">401</span><span class="tsv-unit">km</span></div>
+        <div class="tsv"><span class="tsv-lbl">VELOCITY</span><span class="tsv-num" id="ts-vel">7.66</span><span class="tsv-unit">km/s</span></div>
+        <div class="tsv"><span class="tsv-lbl">ROLL</span><span class="tsv-num" id="ts-roll">0.3</span><span class="tsv-unit">°</span></div>
+        <div class="tsv"><span class="tsv-lbl">PITCH</span><span class="tsv-num" id="ts-pitch">-1.2</span><span class="tsv-unit">°</span></div>
+        <div class="tsv"><span class="tsv-lbl">YAW</span><span class="tsv-num" id="ts-yaw">0.8</span><span class="tsv-unit">°</span></div>
+        <div class="tsv"><span class="tsv-lbl">ACTIVE LINK</span><span class="tsv-num" id="ts-rssi" style="font-size:14px">-72</span><span class="tsv-unit">dBm</span></div>
+        <div class="tsv"><span class="tsv-lbl">PACKETS TX</span><span class="tsv-num" id="ts-pkts">0</span><span class="tsv-unit">pkt</span></div>
+      </div>
+    </div>
+
+    <!-- Handover algorithm panel -->
+    <div class="algo-panel">
+      <div class="algo-lbl">HANDOVER DECISION ENGINE</div>
+      <div id="algo-rows">
+        <div class="algo-row winner" id="ar-0">
+          <span class="algo-node">Dublin</span>
+          <div class="algo-rssi"><div class="algo-rssi-bar"><div class="algo-rssi-f" id="af-0" style="width:82%"></div></div></div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--green);min-width:50px;text-align:right" id="av-0">-72dBm</span>
+        </div>
+        <div class="algo-row" id="ar-1">
+          <span class="algo-node">Johannesburg</span>
+          <div class="algo-rssi"><div class="algo-rssi-bar"><div class="algo-rssi-f" id="af-1" style="width:44%"></div></div></div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text2);min-width:50px;text-align:right" id="av-1">-95dBm</span>
+        </div>
+        <div class="algo-row" id="ar-2">
+          <span class="algo-node">New Norcia</span>
+          <div class="algo-rssi"><div class="algo-rssi-bar"><div class="algo-rssi-f" id="af-2" style="width:25%"></div></div></div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text2);min-width:50px;text-align:right" id="av-2">-104dBm</span>
+        </div>
+        <div class="algo-row" id="ar-3">
+          <span class="algo-node">Malargüe</span>
+          <div class="algo-rssi"><div class="algo-rssi-bar"><div class="algo-rssi-f" id="af-3" style="width:16%"></div></div></div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text2);min-width:50px;text-align:right" id="av-3">-109dBm</span>
+        </div>
+      </div>
+      <div class="algo-decision" id="algo-decision">
+        Algorithm: <span class="highlight">Max RSSI + hysteresis (+3dBm)</span><br>
+        Active: <span class="highlight" id="ad-active">Dublin</span><br>
+        Threshold for switch: <span class="highlight" id="ad-thresh">-69dBm</span><br>
+        Decision interval: <span class="highlight">500ms</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Ground station definitions (2 Europe, 2 outside — ESA partnership) ──
+const GS_DEF=[
+  {name:'Dublin',       lat: 53.33, lon: -6.25,  country:'Ireland',      region:'EU'},
+  {name:'Johannesburg', lat:-26.20, lon: 28.04,  country:'South Africa', region:'AF'},
+  {name:'New Norcia',   lat:-31.05, lon:116.19,  country:'Australia',    region:'AUS'},
+  {name:'Malargüe',     lat:-35.77, lon:-69.40,  country:'Argentina',    region:'ARG'},
+];
+
+// ── World continent outlines [lat, lon] — detailed ──
+const CONTINENTS=[
+
+// ── NORTH AMERICA ──
+[[71.4,-156.7],[70.0,-162.0],[64.5,-166.5],[60.5,-165.9],
+ [58.8,-158.5],[57.2,-153.2],[58.2,-136.3],[55.0,-130.2],
+ [50.6,-127.9],[48.5,-124.8],[46.3,-124.1],[42.9,-124.6],
+ [37.8,-122.5],[34.5,-120.5],[32.7,-117.2],[31.9,-116.6],
+ [28.0,-114.5],[22.9,-109.9],[22.0,-106.0],[19.1,-104.3],
+ [16.8,-99.9],[15.7,-96.6],[14.9,-92.3],[13.9,-89.5],
+ [11.6,-86.1],[8.9,-83.5],[8.9,-79.5],[9.4,-82.2],
+ [10.0,-83.0],[15.9,-88.0],[21.2,-86.8],[21.6,-91.1],
+ [25.2,-90.5],[29.0,-89.2],[30.4,-88.0],[29.9,-81.5],
+ [26.7,-82.0],[24.6,-81.8],[25.3,-80.3],[28.4,-80.6],
+ [30.4,-81.4],[32.1,-80.8],[33.9,-78.0],[35.3,-75.5],
+ [36.9,-76.0],[38.8,-75.2],[40.5,-74.0],[41.2,-72.0],
+ [42.0,-70.2],[44.6,-66.9],[47.0,-60.0],[46.2,-59.9],
+ [47.6,-52.7],[52.6,-55.6],[55.3,-59.7],[58.5,-63.4],
+ [61.8,-73.5],[63.7,-68.5],[62.0,-77.0],[60.0,-78.0],
+ [52.8,-79.5],[51.5,-79.0],[54.0,-83.0],[57.0,-87.0],
+ [58.8,-94.2],[60.0,-96.0],[65.0,-88.0],[68.5,-83.5],
+ [70.0,-84.0],[72.0,-96.0],[70.0,-104.0],[68.0,-120.0],
+ [70.0,-130.0],[70.0,-141.0],[71.4,-156.7]],
+
+// ── SOUTH AMERICA ──
+[[12.5,-72.0],[11.8,-70.2],[10.8,-62.0],[8.5,-61.5],
+ [6.8,-60.6],[5.9,-57.2],[4.0,-52.6],[2.0,-50.3],
+ [0.5,-50.0],[-1.4,-48.5],[-3.8,-38.5],[-5.8,-35.2],
+ [-8.1,-34.9],[-12.9,-38.5],[-16.0,-39.0],[-23.0,-43.1],
+ [-26.3,-48.6],[-30.0,-51.1],[-32.7,-52.2],[-34.9,-57.9],
+ [-36.3,-57.0],[-38.7,-62.3],[-42.8,-65.0],[-46.5,-65.5],
+ [-51.7,-69.2],[-54.0,-67.6],[-55.9,-67.3],[-54.0,-70.5],
+ [-52.0,-74.6],[-46.5,-75.1],[-42.5,-73.8],[-38.2,-73.5],
+ [-30.2,-71.5],[-24.0,-70.5],[-18.5,-70.5],[-14.1,-76.2],
+ [-9.5,-78.7],[-4.5,-81.0],[-1.5,-80.8],[0.7,-80.0],
+ [4.0,-77.2],[7.2,-77.3],[9.0,-79.5],[11.0,-74.0],[12.5,-72.0]],
+
+// ── EUROPE ──
+[[71.2,28.2],[70.5,22.0],[70.0,18.0],[68.0,14.5],[64.0,8.0],
+ [62.5,5.2],[60.4,5.0],[58.0,7.5],[57.0,8.0],[55.0,8.5],
+ [54.5,9.0],[53.0,8.5],[52.2,4.5],[51.9,4.1],[51.5,3.7],
+ [51.0,2.5],[50.9,1.6],[49.7,-0.4],[48.0,-4.7],[47.3,-2.5],
+ [46.0,-1.2],[45.0,-1.1],[43.5,-1.7],[43.4,-8.5],[42.5,-9.0],
+ [39.5,-9.5],[37.0,-8.9],[36.1,-5.6],[36.0,-5.3],[36.6,-2.1],
+ [37.9,-0.7],[39.5,0.2],[40.7,0.8],[42.0,3.2],[43.3,7.6],
+ [43.5,10.2],[43.1,11.0],[42.2,12.0],[41.2,13.5],[40.0,15.5],
+ [38.1,15.6],[37.6,15.8],[40.4,18.3],[41.3,19.5],[42.5,18.5],
+ [44.8,14.3],[45.2,13.9],[46.4,13.5],[48.0,17.2],[48.2,19.5],
+ [49.6,18.2],[51.1,14.5],[52.1,14.7],[53.5,14.5],[54.3,18.5],
+ [55.1,20.7],[56.4,21.0],[57.6,23.5],[58.0,24.8],[59.5,25.5],
+ [60.4,24.9],[62.0,24.0],[64.0,25.5],[65.8,24.5],[68.0,26.0],
+ [70.0,25.0],[71.2,28.2]],
+
+// ── AFRICA ──
+[[37.0,-2.5],[35.7,-5.9],[35.2,-4.3],[34.5,0.0],[33.5,3.0],
+ [33.0,8.0],[37.1,10.0],[37.0,11.5],[33.0,13.5],[32.8,15.0],
+ [30.0,20.0],[31.5,25.0],[31.0,30.0],[30.6,32.3],[28.5,34.5],
+ [24.0,37.0],[21.5,38.5],[18.0,41.5],[15.0,42.0],[12.5,43.5],
+ [11.5,51.3],[10.5,51.0],[8.0,50.0],[4.0,42.5],[2.0,41.5],
+ [0.0,42.0],[-1.5,41.0],[-4.0,40.0],[-8.0,40.0],[-11.0,40.5],
+ [-14.0,40.6],[-17.0,38.5],[-22.0,35.5],[-26.0,33.5],
+ [-34.4,26.5],[-34.4,26.0],[-34.8,20.0],[-34.4,18.5],
+ [-33.0,17.5],[-30.0,17.3],[-28.5,16.5],[-26.0,15.0],
+ [-22.0,14.5],[-17.0,12.0],[-14.0,12.3],[-6.0,12.5],
+ [-4.5,11.8],[-1.5,9.5],[1.0,9.3],[3.0,8.6],[4.0,8.6],
+ [5.5,6.8],[6.4,5.3],[5.3,4.0],[5.1,2.5],[4.9,1.0],
+ [5.0,-1.0],[5.0,-3.0],[5.1,-5.0],[4.9,-8.0],[6.9,-11.3],
+ [8.5,-13.2],[9.3,-14.0],[11.5,-15.5],[12.5,-16.8],[14.0,-17.5],
+ [16.0,-17.0],[20.0,-17.0],[24.0,-15.5],[27.9,-13.5],[30.0,-9.9],
+ [32.5,-8.5],[33.5,-7.6],[35.7,-5.9],[37.0,-2.5]],
+
+// ── ASIA MAIN ──
+[[36.0,26.0],[38.0,28.0],[41.5,32.0],[42.0,38.0],[40.5,50.0],
+ [36.5,50.0],[36.5,55.0],[26.0,57.0],[22.0,60.0],[22.5,68.5],
+ [20.5,72.6],[14.0,74.5],[8.1,77.5],[8.0,80.0],[14.0,80.5],
+ [20.3,86.7],[21.6,92.2],[18.0,92.5],[16.0,98.5],[10.0,100.0],
+ [6.0,100.0],[1.3,104.0],[4.0,108.5],[10.5,108.0],[16.0,108.5],
+ [20.0,110.0],[22.0,114.0],[24.0,120.0],[30.0,122.0],[34.0,120.5],
+ [38.0,122.0],[40.0,124.5],[42.0,130.5],[46.0,138.5],[50.0,142.0],
+ [54.0,136.0],[58.0,138.0],[60.5,140.0],[62.5,148.0],[60.0,152.0],
+ [56.0,163.0],[52.0,160.0],[50.0,158.0],[52.5,152.0],[56.0,140.0],
+ [62.0,130.0],[66.0,130.0],[70.5,128.0],[72.5,120.0],[76.0,108.0],
+ [78.0,102.0],[78.5,97.0],[76.0,82.0],[74.5,72.0],[70.5,60.0],
+ [70.2,50.0],[70.0,42.0],[68.0,36.0],[66.0,28.0],[60.0,40.0],
+ [54.5,38.0],[46.0,40.0],[44.0,36.0],[42.0,34.0],[40.0,30.5],
+ [38.5,28.0],[36.0,26.0]],
+
+// ── ARABIAN PENINSULA ──
+[[29.5,32.5],[28.0,34.5],[24.0,37.2],[21.5,39.0],[18.0,42.0],
+ [15.0,42.5],[12.5,43.7],[14.5,50.0],[18.0,54.8],[22.0,59.8],
+ [24.5,56.8],[25.0,55.0],[26.0,52.8],[28.0,48.8],[29.8,48.5],
+ [30.6,47.5],[32.5,44.0],[33.5,40.0],[33.0,36.5],[31.5,34.5],[29.5,32.5]],
+
+// ── AUSTRALIA ──
+[[-14.4,126.0],[-14.0,132.0],[-12.0,136.0],[-14.0,140.0],
+ [-16.0,136.0],[-20.0,138.5],[-22.0,144.0],[-24.0,151.0],
+ [-26.0,153.4],[-28.5,153.6],[-30.0,153.1],[-32.0,152.5],
+ [-33.9,151.2],[-35.0,150.7],[-37.5,149.9],[-38.5,146.4],
+ [-38.0,143.0],[-36.0,136.5],[-32.0,133.6],[-32.0,130.0],
+ [-31.5,126.5],[-26.5,114.0],[-22.0,114.0],[-20.0,116.5],
+ [-16.5,122.2],[-14.4,126.0]],
+
+// ── GREENLAND ──
+[[59.8,-44.3],[63.5,-41.5],[67.5,-24.0],[72.0,-20.0],
+ [76.0,-18.5],[82.0,-26.0],[83.5,-36.0],[80.0,-44.0],
+ [76.0,-60.0],[68.0,-54.0],[64.0,-52.0],[59.8,-44.3]],
+
+// ── ANTARCTICA ──
+[[-70,-180],[-70,-90],[-72,-60],[-70,0],[-72,60],[-70,120],
+ [-72,150],[-70,180],[-90,180],[-90,-180],[-70,-180]],
+
+// ── BRITISH ISLES (simplified) ──
+[[50.0,-5.7],[50.2,-3.5],[51.1,-3.0],[51.5,-5.0],[52.4,-4.3],
+ [53.4,-4.7],[54.3,-3.3],[55.0,-1.5],[55.0,-2.0],[55.9,-3.2],
+ [57.5,-3.8],[58.5,-3.1],[58.9,-3.4],[58.7,-2.0],[57.0,-1.9],
+ [55.7,-2.0],[55.0,-1.5],[53.5,0.2],[52.5,1.6],[51.5,1.2],
+ [50.8,0.4],[50.0,-0.2],[50.0,-2.4],[50.0,-5.7]],
+
+];
+
+// ── Ireland (highlighted) ──
+const IRELAND=[
+  [54.6,-5.9],[55.3,-6.3],[55.0,-8.2],[54.0,-10.1],[53.3,-10.0],
+  [52.2,-9.8],[51.5,-9.5],[51.4,-8.5],[52.2,-6.1],[53.5,-6.0],[54.0,-6.0],[54.6,-5.9]
+];
+
+// ── State ──
+let metSecs=764, activeGS=0, hoCount=0;
+let orbAngle=0.8; // orbital position (radians)
+const INC=97.4*Math.PI/180; // sun-synchronous inclination
+let rssiVals=[-72,-95,-104,-109];
+
+function getSatPos(){
+  const lat=Math.asin(Math.sin(INC)*Math.sin(orbAngle))*180/Math.PI;
+  const lon=(Math.atan2(Math.cos(INC)*Math.sin(orbAngle),Math.cos(orbAngle))*180/Math.PI+360)%360-180;
+  return{lat,lon};
+}
+
+function p2(n){return String(Math.floor(n)).padStart(2,'0');}
+function jit(v,a){return v+(Math.random()-0.5)*a;}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+
+// MET
+setInterval(()=>{
+  metSecs++;
+  const d=Math.floor(metSecs/86400),h=Math.floor((metSecs%86400)/3600),m=Math.floor((metSecs%3600)/60),sc=metSecs%60;
+  document.getElementById('h-met').textContent=`${String(d).padStart(3,'0')}:${p2(h)}:${p2(m)}:${p2(sc)}`;
+},1000);
+
+// ── Map canvas ──
+const canvas=document.getElementById('mapCanvas');
+const ctx=canvas.getContext('2d');
+let lastT=0;
+
+function resize(){canvas.width=canvas.offsetWidth;canvas.height=canvas.offsetHeight;}
+resize();window.addEventListener('resize',()=>{resize();});
+
+// Global equirectangular projection with padding
+function project(lat,lon,W,H){
+  const px=18,py=16;
+  const x=px+(lon+180)/360*(W-2*px);
+  const y=py+(1-(lat+90)/180)*(H-2*py);
+  return[x,y];
+}
+
+// Animated signal packets along link lines
+const packets=[];
+function spawnPacket(gsIdx){
+  packets.push({gs:gsIdx,t:0,dur:1.4+Math.random()*0.6});
+}
+setInterval(()=>{if(Math.random()<0.7)spawnPacket(activeGS);},600);
+
+// Draw animated packet traveling from GS to satellite
+function drawPackets(satX,satY,W,H){
+  for(let i=packets.length-1;i>=0;i--){
+    const p=packets[i];p.t+=0.016;
+    if(p.t>=p.dur){packets.splice(i,1);continue;}
+    const[gx,gy]=project(GS_DEF[p.gs].lat,GS_DEF[p.gs].lon,W,H);
+    const frac=p.t/p.dur;
+    const px2=gx+(satX-gx)*frac;
+    const py2=gy+(satY-gy)*frac;
+    const alpha=(1-Math.abs(frac-0.5)*2)*0.9;
+    ctx.beginPath();ctx.arc(px2,py2,2.5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(61,220,132,${alpha})`;ctx.fill();
+    ctx.beginPath();ctx.arc(px2,py2,4,0,Math.PI*2);
+    ctx.fillStyle=`rgba(61,220,132,${alpha*0.3})`;ctx.fill();
+  }
+}
+
+function drawMap(ts){
+  const dt=Math.min(ts-lastT,50);lastT=ts;
+
+  // One full orbit = 5 minutes screen time (CubeSat LEO ~90 min real)
+  orbAngle+=(2*Math.PI/300)*(dt/1000);
+  if(orbAngle>2*Math.PI)orbAngle-=2*Math.PI;
+
+  const sat=getSatPos();
+  const W=canvas.width,H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Deep space background
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#0a0812');bg.addColorStop(1,'#08070d');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+
+  // Graticule grid (global: every 30°)
+  ctx.strokeStyle='rgba(42,39,64,0.38)';ctx.lineWidth=0.5;
+  for(let lo=-150;lo<=180;lo+=30){
+    const[x]=project(0,lo,W,H);
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
+    if(lo>-175){ctx.font='6px "Share Tech Mono"';ctx.fillStyle='rgba(74,71,96,0.45)';ctx.fillText(lo+'°',x+2,H-4);}
+  }
+  for(let la=-60;la<=90;la+=30){
+    const[,y]=project(la,0,W,H);
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+    ctx.font='6px "Share Tech Mono"';ctx.fillStyle='rgba(74,71,96,0.45)';ctx.fillText(la+'°',2,y-2);
+  }
+  // Equator emphasis
+  const[,eqY]=project(0,0,W,H);
+  ctx.strokeStyle='rgba(42,39,64,0.7)';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(0,eqY);ctx.lineTo(W,eqY);ctx.stroke();
+
+  // Ocean wash
+  ctx.fillStyle='rgba(6,6,14,0.55)';ctx.fillRect(0,0,W,H);
+
+  // Draw continents
+  function drawPoly(pts,fill,stroke,sw){
+    if(!pts||pts.length<2)return;
+    ctx.beginPath();
+    pts.forEach(([la,lo],i)=>{const[x,y]=project(la,lo,W,H);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+    if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=sw;ctx.stroke();}
+  }
+  CONTINENTS.forEach(c=>drawPoly(c,'rgba(20,18,30,0.96)','rgba(245,166,35,0.13)',0.7));
+  drawPoly(IRELAND,'rgba(24,22,36,0.98)','rgba(245,166,35,0.32)',1.1);
+
+  // Satellite canvas position
+  const[satX,satY]=project(sat.lat,sat.lon,W,H);
+
+  // Compute RSSI from great-circle distance
+  GS_DEF.forEach((gs,i)=>{
+    const φ1=sat.lat*Math.PI/180,φ2=gs.lat*Math.PI/180;
+    const Δφ=(gs.lat-sat.lat)*Math.PI/180,Δλ=(gs.lon-sat.lon)*Math.PI/180;
+    const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+    const distDeg=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*180/Math.PI;
+    rssiVals[i]=clamp(-52-distDeg*1.5+jit(0,2.5),-120,-30);
+  });
+
+  // Handover decision
+  const hysteresis=3;
+  const best=rssiVals.indexOf(Math.max(...rssiVals));
+  if(best!==activeGS&&rssiVals[best]>rssiVals[activeGS]+hysteresis){
+    const prev=activeGS;activeGS=best;hoCount++;
+    document.getElementById('ov-ho').textContent=hoCount;
+    document.getElementById('ns-ho').textContent=hoCount;
+    document.getElementById('ov-active').textContent=GS_DEF[best].name;
+    addHO(`Handover ${GS_DEF[prev].name} → ${GS_DEF[best].name} · +${(rssiVals[best]-rssiVals[prev]).toFixed(0)}dBm margin`,'ok');
+    document.getElementById('gs-'+best).classList.add('handover');
+    setTimeout(()=>document.getElementById('gs-'+best).classList.remove('handover'),1200);
+    const _pn=document.getElementById('pill-net');
+    if(_pn){_pn.className='pill warn';_pn.innerHTML='<span class="dot"></span>HANDOVER';}
+    setTimeout(()=>{const _pn2=document.getElementById('pill-net');if(_pn2){_pn2.className='pill ok';_pn2.innerHTML='<span class="dot"></span>4 NODES ONLINE';}},2200);
+  }
+
+  // Orbital ground track (future passes — dashed)
+  ctx.setLineDash([2,6]);ctx.strokeStyle='rgba(245,166,35,0.12)';ctx.lineWidth=0.8;
+  ctx.beginPath();
+  let first=true;
+  for(let step=0;step<=180;step++){
+    const futAngle=(orbAngle+step*Math.PI/180)%(2*Math.PI);
+    const fLat=Math.asin(Math.sin(INC)*Math.sin(futAngle))*180/Math.PI;
+    const fLon=(Math.atan2(Math.cos(INC)*Math.sin(futAngle),Math.cos(futAngle))*180/Math.PI+360)%360-180;
+    const[fx,fy]=project(fLat,fLon,W,H);
+    // Detect wrap-around (when lon jumps >120°) and break
+    if(step>0){
+      const prevAngle=(orbAngle+(step-1)*Math.PI/180)%(2*Math.PI);
+      const prevLon=(Math.atan2(Math.cos(INC)*Math.sin(prevAngle),Math.cos(prevAngle))*180/Math.PI+360)%360-180;
+      if(Math.abs(fLon-prevLon)>120){ctx.stroke();ctx.beginPath();first=true;}
+    }
+    first?ctx.moveTo(fx,fy):ctx.lineTo(fx,fy);
+    first=false;
+  }
+  ctx.stroke();ctx.setLineDash([]);
+
+  // Orbit trail (past positions)
+  for(let i=1;i<=35;i++){
+    const tAngle=(orbAngle-i*0.04+2*Math.PI)%(2*Math.PI);
+    const tLat=Math.asin(Math.sin(INC)*Math.sin(tAngle))*180/Math.PI;
+    const tLon=(Math.atan2(Math.cos(INC)*Math.sin(tAngle),Math.cos(tAngle))*180/Math.PI+360)%360-180;
+    const[tx,ty]=project(tLat,tLon,W,H);
+    ctx.beginPath();ctx.arc(tx,ty,1.4,0,Math.PI*2);
+    ctx.fillStyle=`rgba(245,166,35,${0.32*(1-i/35)})`;ctx.fill();
+  }
+
+  // Coverage footprint (±10° from subsatellite point)
+  ctx.beginPath();
+  const footSteps=72;
+  for(let s=0;s<=footSteps;s++){
+    const az=s*(2*Math.PI/footSteps);
+    const fr=10*Math.PI/180;
+    const φs=sat.lat*Math.PI/180,λs=sat.lon*Math.PI/180;
+    const fLat=Math.asin(Math.sin(φs)*Math.cos(fr)+Math.cos(φs)*Math.sin(fr)*Math.cos(az))*180/Math.PI;
+    const fLon=(λs+Math.atan2(Math.sin(az)*Math.sin(fr)*Math.cos(φs),Math.cos(fr)-Math.sin(φs)*Math.sin(fLat*Math.PI/180)))*180/Math.PI;
+    const[fx,fy]=project(fLat,((fLon+540)%360)-180,W,H);
+    s===0?ctx.moveTo(fx,fy):ctx.lineTo(fx,fy);
+  }
+  ctx.closePath();
+  ctx.fillStyle='rgba(245,166,35,0.035)';ctx.fill();
+  ctx.strokeStyle='rgba(245,166,35,0.1)';ctx.setLineDash([3,7]);ctx.lineWidth=0.9;ctx.stroke();ctx.setLineDash([]);
+
+  // Ground station markers and link lines
+  GS_DEF.forEach((gs,i)=>{
+    const[gx,gy]=project(gs.lat,gs.lon,W,H);
+    const isActive=i===activeGS;
+    const inRange=rssiVals[i]>-114;
+
+    // Link beam
+    if(inRange){
+      const grad=ctx.createLinearGradient(gx,gy,satX,satY);
+      if(isActive){
+        grad.addColorStop(0,'rgba(61,220,132,0.5)');
+        grad.addColorStop(1,'rgba(61,220,132,0.05)');
+      } else {
+        grad.addColorStop(0,'rgba(245,166,35,0.2)');
+        grad.addColorStop(1,'rgba(245,166,35,0.02)');
+      }
+      ctx.beginPath();ctx.moveTo(gx,gy);ctx.lineTo(satX,satY);
+      ctx.strokeStyle=grad;ctx.lineWidth=isActive?1.8:0.8;
+      ctx.setLineDash(isActive?[]:[3,6]);ctx.stroke();ctx.setLineDash([]);
+    }
+
+    // Pulse rings for active station
+    if(isActive){
+      const pulse=(Math.sin(Date.now()/600)+1)/2;
+      for(let r=1;r<=3;r++){
+        ctx.beginPath();ctx.arc(gx,gy,7+r*7+pulse*3,0,Math.PI*2);
+        ctx.strokeStyle=`rgba(61,220,132,${0.14*(1-r/4)})`;ctx.lineWidth=0.9;ctx.stroke();
+      }
+    }
+
+    // Station dot
+    ctx.beginPath();ctx.arc(gx,gy,isActive?7:5,0,Math.PI*2);
+    ctx.fillStyle=isActive?'rgba(61,220,132,0.2)':'rgba(245,166,35,0.1)';
+    ctx.strokeStyle=isActive?'rgba(61,220,132,0.95)':'rgba(245,166,35,0.55)';
+    ctx.lineWidth=1.5;ctx.fill();ctx.stroke();
+
+    // Inner dot
+    ctx.beginPath();ctx.arc(gx,gy,2,0,Math.PI*2);
+    ctx.fillStyle=isActive?'rgba(61,220,132,0.9)':'rgba(245,166,35,0.6)';ctx.fill();
+
+    // Name label
+    const lx=gx+11,ly=gy+4;
+    ctx.font=`${isActive?'bold ':''} 11px "Bebas Neue"`;
+    ctx.fillStyle=isActive?'rgba(61,220,132,0.95)':'rgba(245,166,35,0.75)';
+    ctx.textAlign='left';ctx.fillText(gs.name,lx,ly);
+    ctx.font='7px "Share Tech Mono"';
+    ctx.fillStyle='rgba(74,71,96,0.8)';
+    const latStr=(Math.abs(gs.lat).toFixed(1))+'°'+(gs.lat>=0?'N':'S');
+    const lonStr=(Math.abs(gs.lon).toFixed(1))+'°'+(gs.lon>=0?'E':'W');
+    ctx.fillText(latStr+' '+lonStr,lx,ly+11);
+  });
+
+  // Animated data packets
+  drawPackets(satX,satY,W,H);
+
+  // Satellite — CubeSat body with solar arrays, oriented along velocity vector
+  const prevPos=getSatPosAt((orbAngle-0.02+2*Math.PI)%(2*Math.PI));
+  const[prevX,prevY]=project(prevPos.lat,prevPos.lon,W,H);
+  const satHeading=Math.atan2(satY-prevY,satX-prevX);
+  ctx.save();ctx.translate(satX,satY);ctx.rotate(satHeading);
+  // Solar panels
+  ctx.fillStyle='rgba(30,80,180,0.55)';
+  ctx.strokeStyle='rgba(80,140,255,0.6)';ctx.lineWidth=0.8;
+  ctx.fillRect(-18,-2,10,4);ctx.strokeRect(-18,-2,10,4);
+  ctx.fillRect(8,-2,10,4);ctx.strokeRect(8,-2,10,4);
+  // Panel detail lines
+  ctx.strokeStyle='rgba(80,140,255,0.3)';ctx.lineWidth=0.4;
+  for(let px=-16;px<-8;px+=3){ctx.beginPath();ctx.moveTo(px,-2);ctx.lineTo(px,2);ctx.stroke();}
+  for(let px=10;px<18;px+=3){ctx.beginPath();ctx.moveTo(px,-2);ctx.lineTo(px,2);ctx.stroke();}
+  // Main body
+  ctx.fillStyle='#252038';ctx.strokeStyle='rgba(245,166,35,0.95)';ctx.lineWidth=1.5;
+  ctx.fillRect(-5,-5,10,10);ctx.strokeRect(-5,-5,10,10);
+  // Body cross-hatch detail
+  ctx.strokeStyle='rgba(245,166,35,0.25)';ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(-5,0);ctx.lineTo(5,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(0,5);ctx.stroke();
+  // Antenna
+  ctx.strokeStyle='rgba(245,166,35,0.7)';ctx.lineWidth=0.8;
+  ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(0,-11);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,-11,1.2,0,Math.PI*2);
+  ctx.fillStyle='rgba(245,166,35,0.9)';ctx.fill();
+  ctx.restore();
+
+  // Satellite glow
+  const sg=ctx.createRadialGradient(satX,satY,0,satX,satY,18);
+  sg.addColorStop(0,'rgba(245,166,35,0.32)');sg.addColorStop(1,'transparent');
+  ctx.beginPath();ctx.arc(satX,satY,18,0,Math.PI*2);ctx.fillStyle=sg;ctx.fill();
+
+  // Update HUD overlays
+  const alt=400+Math.sin(orbAngle*2)*12;
+  document.getElementById('ov-alt').textContent=alt.toFixed(0)+' km';
+  document.getElementById('ov-vel').textContent=(7.66+Math.cos(orbAngle*2)*0.02).toFixed(2)+' km/s';
+  document.getElementById('ov-active').textContent=GS_DEF[activeGS].name;
+  document.getElementById('ts-alt').textContent=alt.toFixed(0);
+
+  updateStationUI();
+  requestAnimationFrame(drawMap);
+}
+
+function getSatPosAt(angle){
+  const lat=Math.asin(Math.sin(INC)*Math.sin(angle))*180/Math.PI;
+  const lon=(Math.atan2(Math.cos(INC)*Math.sin(angle),Math.cos(angle))*180/Math.PI+360)%360-180;
+  return{lat,lon};
+}
+
+requestAnimationFrame(drawMap);
+
+let gsPackets=[0,0,0,0];
+function updateStationUI(){
+  const hysteresis=3;
+  rssiVals.forEach((v,i)=>{
+    const pct=Math.max(0,(v+120)/80*100);
+    const fill=document.getElementById('rssi-'+i);
+    const rv=document.getElementById('rv-'+i);
+    const snrEl=document.getElementById('snr-'+i);
+    const card=document.getElementById('gs-'+i);
+    const role=document.getElementById('role-'+i);
+    const af=document.getElementById('af-'+i);
+    const av=document.getElementById('av-'+i);
+    const ar=document.getElementById('ar-'+i);
+
+    if(fill){fill.style.width=pct+'%';fill.className='rssi-f'+(pct<25?' weak':pct<10?' dead':'');}
+    if(rv)rv.textContent=v.toFixed(0)+'dBm';
+    if(snrEl)snrEl.textContent=Math.max(0,(v+120)/12).toFixed(1)+'dB';
+
+    const isActive=i===activeGS;
+    if(card){isActive?card.classList.add('active'):card.classList.remove('active');}
+    if(role){role.textContent=isActive?'PRIMARY':'STANDBY';}
+    if(af)af.style.width=pct+'%';
+    if(av){av.textContent=v.toFixed(0)+'dBm';av.style.color=isActive?'var(--green)':'var(--text2)';}
+    if(ar){ar.className='algo-row'+(isActive?' winner':'');}
+
+    if(isActive){
+      gsPackets[i]++;
+      const pe=document.getElementById('pkt-'+i);
+      if(pe)pe.textContent=gsPackets[i];
+    }
+  });
+
+  const active=GS_DEF[activeGS];
+  const thresh=(rssiVals[activeGS]+hysteresis).toFixed(0);
+  const adA=document.getElementById('ad-active');
+  const adT=document.getElementById('ad-thresh');
+  if(adA)adA.textContent=active.name;
+  if(adT)adT.textContent=thresh+'dBm';
+}
+
+// Telem update
+let bat=78.2,volt=3.94,temp=24.4,roll=0.3,pitch=-1.2,yaw=0.8,pktsTotal=0;
+setInterval(()=>{
+  bat=clamp(jit(bat,0.08),50,95);volt=clamp(jit(volt,0.015),3.5,4.2);
+  temp=clamp(jit(temp,0.15),18,32);
+  roll=clamp(jit(roll,0.1),-3,3);pitch=clamp(jit(pitch,0.1),-3,3);yaw=clamp(jit(yaw,0.1),-3,3);
+  pktsTotal++;
+  const cur=getSatPos();
+  set('ts-bat',bat.toFixed(1));set('ts-volt',volt.toFixed(2));
+  set('ts-temp',temp.toFixed(1));set('ts-roll',roll.toFixed(1));
+  set('ts-pitch',pitch.toFixed(1));set('ts-yaw',yaw.toFixed(1));
+  set('ts-rssi',rssiVals[activeGS].toFixed(0));set('ts-pkts',pktsTotal);
+  set('ts-vel',(7.66+Math.random()*0.02).toFixed(2));
+},1000);
+
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+
+// Handover log
+const hoLog=document.getElementById('ho-log');
+function addHO(msg,type){
+  const d=Math.floor(metSecs/86400),h=Math.floor((metSecs%86400)/3600),m=Math.floor((metSecs%3600)/60),sc=metSecs%60;
+  const row=document.createElement('div');row.className='ho-entry';
+  row.innerHTML=`<span class="ho-t">${String(d).padStart(3,'0')}:${p2(h)}:${p2(m)}</span><span class="ho-m ${type}">${msg}</span>`;
+  hoLog.insertBefore(row,hoLog.firstChild);
+  if(hoLog.children.length>30)hoLog.removeChild(hoLog.lastChild);
+}
+
+// Station card click to highlight
+document.querySelectorAll('.gs-card').forEach((card,i)=>{
+  card.style.cursor='pointer';
+  card.addEventListener('click',()=>{
+    // Force visual focus without changing actual active GS
+    document.querySelectorAll('.gs-card').forEach(c=>c.style.outline='none');
+    card.style.outline='1px solid rgba(245,166,35,0.5)';
+    setTimeout(()=>card.style.outline='none',1800);
+    addHO(`Manual focus — ${GS_DEF[i].name} · RSSI ${rssiVals[i].toFixed(0)}dBm · SNR ${Math.max(0,(rssiVals[i]+120)/12).toFixed(1)}dB`,'info');
+  });
+});
+</script>
+</body>
+</html>

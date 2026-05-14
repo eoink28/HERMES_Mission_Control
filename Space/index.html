@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HERMES — Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg:       #08070d;
+  --bg1:      #0e0d16;
+  --bg2:      #13111c;
+  --bg3:      #1a1826;
+  --border:   #1e1c2e;
+  --border2:  #2a2740;
+  --amber:    #f5a623;
+  --amber2:   #e8890a;
+  --amber-dim: rgba(245,166,35,0.1);
+  --amber-glow: rgba(245,166,35,0.05);
+  --white:    #f0ece0;
+  --off:      #9e9a88;
+  --muted:    #4a4760;
+  --faint:    #252338;
+  --green:    #3ddc84;
+  --red:      #ff4757;
+  --mono:     'Share Tech Mono', monospace;
+  --display:  'Bebas Neue', sans-serif;
+  --body:     'Barlow', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--white); font-family: var(--body); min-height: 100vh; overflow-x: hidden; }
+
+/* Grain */
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:9998; opacity:0.5;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+#stars { position:fixed; inset:0; pointer-events:none; z-index:0; }
+
+/* ── HEADER ── */
+.hdr {
+  position:relative; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 32px; height:70px;
+  background:var(--bg1); border-bottom:1px solid var(--border2);
+}
+.hdr::after {
+  content:''; position:absolute; bottom:-1px; left:0; right:0; height:1px;
+  background:linear-gradient(90deg,transparent,var(--amber),transparent); opacity:0.2;
+}
+
+/* Mission patch */
+.patch {
+  width:50px; height:50px; border-radius:50%;
+  border:2px solid var(--amber2);
+  background:radial-gradient(circle at 38% 32%, #1e1b2e, #08070d);
+  display:flex; align-items:center; justify-content:center;
+  position:relative; flex-shrink:0;
+  box-shadow:0 0 20px rgba(245,166,35,0.18), inset 0 0 10px rgba(245,166,35,0.04);
+}
+.patch::before {
+  content:''; position:absolute; inset:4px; border-radius:50%;
+  border:1px solid rgba(245,166,35,0.18);
+}
+.patch::after {
+  content:''; position:absolute; inset:7px; border-radius:50%;
+  border:1px dashed rgba(245,166,35,0.1);
+}
+.patch-inner { display:flex; flex-direction:column; align-items:center; gap:1px; position:relative; z-index:1; }
+.patch-icon { font-size:15px; filter:drop-shadow(0 0 5px rgba(245,166,35,0.6)); }
+.patch-text { font-family:var(--display); font-size:10px; letter-spacing:0.2em; color:var(--amber); line-height:1; }
+
+.hdr-brand { display:flex; align-items:center; gap:14px; }
+.brand-title { font-family:var(--display); font-size:30px; letter-spacing:0.15em; color:var(--white); line-height:1; }
+.brand-sub { font-family:var(--mono); font-size:8px; letter-spacing:0.16em; color:var(--muted); margin-top:3px; }
+
+/* Centre flags */
+.hdr-centre { display:flex; align-items:center; gap:20px; }
+.flag-grp { display:flex; align-items:center; gap:8px; }
+.flag-lbl { font-family:var(--mono); font-size:8px; letter-spacing:0.12em; color:var(--muted); }
+.flag { height:20px; border:1px solid var(--border2); overflow:hidden; display:flex; flex-shrink:0; }
+.flag-ie { width:32px; }
+.flag-ie .s1{flex:1;background:#169B62}.flag-ie .s2{flex:1;background:#f0ece0}.flag-ie .s3{flex:1;background:#FF883E}
+.flag-esa { width:44px; background:#003399; align-items:center; justify-content:center; }
+.flag-esa span { font-family:var(--mono); font-size:7px; color:white; letter-spacing:0.1em; }
+
+/* Nav */
+.hdr-r { display:flex; align-items:center; gap:10px; }
+.nav { display:flex; gap:0; }
+.nav a {
+  font-family:var(--mono); font-size:9px; letter-spacing:0.12em;
+  padding:8px 18px; text-decoration:none;
+  border:1px solid var(--border2); color:var(--muted);
+  background:var(--bg); transition:all 0.2s; margin-left:-1px;
+}
+.nav a:hover { color:var(--amber); border-color:rgba(245,166,35,0.4); background:var(--amber-glow); z-index:1; }
+.nav a.active { color:var(--bg1); background:var(--amber2); border-color:var(--amber); z-index:1; }
+
+/* ── MAIN ── */
+.main { position:relative; z-index:5; max-width:1360px; margin:0 auto; padding:48px 32px 48px; }
+
+/* ── HERO ── */
+.hero {
+  display:grid; grid-template-columns:1fr 220px;
+  align-items:start; gap:40px;
+  margin-bottom:48px; padding-bottom:40px;
+  border-bottom:1px solid var(--border);
+}
+.hero-eyebrow { font-family:var(--mono); font-size:9px; letter-spacing:0.22em; color:var(--amber); margin-bottom:14px; opacity:0.7; }
+.hero-title {
+  font-family:var(--display); font-size:108px; line-height:0.88;
+  letter-spacing:0.04em; color:var(--white);
+  text-shadow:0 0 80px rgba(245,166,35,0.1); margin-bottom:22px;
+}
+.hero-title .accent { color:var(--amber); }
+.hero-desc { font-family:var(--body); font-size:14px; font-weight:300; line-height:1.75; color:var(--off); max-width:540px; }
+
+.hero-right {
+  padding-left:28px; border-left:1px solid var(--border2);
+  display:flex; flex-direction:column; gap:0; margin-top:6px;
+}
+.si { padding:11px 0; border-bottom:1px solid var(--border); }
+.si:last-child { border-bottom:none; }
+.si-lbl { font-family:var(--mono); font-size:7px; letter-spacing:0.18em; color:var(--muted); margin-bottom:3px; }
+.si-val { font-family:var(--mono); font-size:16px; color:var(--amber); letter-spacing:0.06em; line-height:1; }
+.si-val.w { color:var(--white); } .si-val.g { color:var(--green); } .si-val.sm { font-size:12px; }
+
+/* ── STATS ── */
+.stats { display:grid; grid-template-columns:repeat(6,1fr); gap:1px; background:var(--border); margin-bottom:36px; }
+.stat { background:var(--bg1); padding:18px 16px; position:relative; overflow:hidden; transition:background 0.2s; }
+.stat:hover { background:var(--bg2); }
+.stat::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--amber); transform:scaleX(0); transition:transform 0.3s; transform-origin:left; }
+.stat:hover::before { transform:scaleX(1); }
+.stat-val { font-family:var(--display); font-size:34px; letter-spacing:0.04em; color:var(--white); line-height:1; margin-bottom:5px; transition:color 0.3s; }
+.stat-val.a { color:var(--amber); } .stat-val.g { color:var(--green); }
+.stat-lbl { font-family:var(--mono); font-size:8px; letter-spacing:0.14em; color:var(--muted); }
+
+/* ── DASH GRID ── */
+.dash-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--border); margin-bottom:36px; }
+.mini-dash { background:var(--bg1); text-decoration:none; display:block; transition:background 0.2s; position:relative; overflow:hidden; }
+.mini-dash::before { content:''; position:absolute; top:0; left:0; bottom:0; width:2px; background:var(--amber); opacity:0; transition:opacity 0.2s; }
+.mini-dash:hover { background:var(--bg2); }
+.mini-dash:hover::before { opacity:1; }
+.mini-dash:hover .md-cta { color:var(--amber); border-color:rgba(245,166,35,0.4); }
+.mini-dash:hover .arrow { transform:translateX(5px); }
+
+.md-hdr { padding:16px 20px 12px; border-bottom:1px solid var(--border); display:flex; align-items:flex-start; justify-content:space-between; }
+.md-title { font-family:var(--display); font-size:20px; letter-spacing:0.15em; color:var(--white); line-height:1; }
+.md-sub { font-family:var(--mono); font-size:7px; letter-spacing:0.12em; color:var(--muted); margin-top:4px; }
+.md-badge { font-family:var(--mono); font-size:8px; letter-spacing:0.08em; padding:3px 9px; border:1px solid var(--green); color:var(--green); background:rgba(61,220,132,0.07); white-space:nowrap; flex-shrink:0; margin-left:10px; }
+.md-badge.a { border-color:var(--amber); color:var(--amber); background:var(--amber-dim); }
+.md-body { padding:14px 20px 18px; }
+
+/* ss mini grid */
+.ss-grid { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:16px; }
+.ss-item { background:var(--bg2); border:1px solid var(--border2); padding:7px 9px; }
+.ss-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.ss-name { font-family:var(--body); font-size:10px; font-weight:400; color:var(--off); }
+.ss-st { font-family:var(--mono); font-size:8px; }
+.ok{color:var(--green)}.warn{color:var(--amber)}.fault{color:var(--red)}
+.bar { height:2px; background:var(--bg); border-radius:1px; overflow:hidden; }
+.bar-f { height:100%; border-radius:1px; transition:width 1s; }
+.bf-g{background:var(--green)}.bf-a{background:var(--amber)}.bf-b{background:#5599ff}.bf-r{background:var(--red)}
+
+/* gs list */
+.gs-list { margin-bottom:16px; display:flex; flex-direction:column; gap:4px; }
+.gs-row { display:flex; align-items:center; gap:9px; padding:6px 9px; background:var(--bg2); border:1px solid var(--border); transition:border-color 0.3s; }
+.gs-row.active { border-color:rgba(245,166,35,0.35); background:var(--amber-glow); }
+.gs-dot { width:6px; height:6px; border-radius:50%; background:var(--border2); flex-shrink:0; }
+.gs-row.active .gs-dot { background:var(--amber); box-shadow:0 0 6px rgba(245,166,35,0.6); animation:gd 1.6s ease-in-out infinite; }
+@keyframes gd{0%,100%{opacity:1}50%{opacity:0.25}}
+.gs-name { font-family:var(--body); font-size:10px; color:var(--muted); flex:1; }
+.gs-row.active .gs-name { color:var(--off); }
+.gs-rb { width:48px; height:2px; background:var(--bg); border-radius:1px; overflow:hidden; }
+.gs-rf { height:100%; background:var(--muted); border-radius:1px; transition:width 0.9s; }
+.gs-row.active .gs-rf { background:var(--amber); }
+.gs-rv { font-family:var(--mono); font-size:8px; color:var(--muted); min-width:50px; text-align:right; }
+.gs-row.active .gs-rv { color:var(--amber); }
+
+.md-cta { display:inline-flex; align-items:center; gap:10px; font-family:var(--mono); font-size:8px; letter-spacing:0.14em; padding:7px 14px; background:var(--bg); border:1px solid var(--border2); color:var(--muted); transition:all 0.2s; }
+.arrow { transition:transform 0.2s; }
+
+/* ── EVENTS ── */
+.events-hdr { font-family:var(--mono); font-size:9px; letter-spacing:0.2em; color:var(--muted); margin-bottom:12px; display:flex; align-items:center; gap:12px; }
+.events-hdr::before { content:''; width:2px; height:12px; background:var(--amber); opacity:0.5; }
+.events-hdr::after { content:''; flex:1; height:1px; background:var(--border); }
+.events-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; background:var(--border); }
+.event-card { background:var(--bg1); padding:16px 18px; border-top:2px solid transparent; transition:border-color 0.2s, background 0.2s; }
+.event-card:hover { background:var(--bg2); border-top-color:var(--amber); }
+.ev-time { font-family:var(--mono); font-size:8px; color:var(--muted); margin-bottom:6px; letter-spacing:0.1em; }
+.ev-title { font-family:var(--display); font-size:16px; letter-spacing:0.1em; color:var(--white); margin-bottom:6px; }
+.ev-desc { font-family:var(--body); font-size:11px; font-weight:300; color:var(--off); line-height:1.65; }
+.ev-tag { display:inline-block; margin-top:10px; font-family:var(--mono); font-size:7px; letter-spacing:0.1em; padding:2px 7px; border:1px solid; }
+.ev-tag.ok{border-color:var(--green);color:var(--green)}.ev-tag.info{border-color:var(--amber);color:var(--amber)}
+
+/* ── FOOTER ── */
+.footer { position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:12px 32px; background:var(--bg1); border-top:1px solid var(--border2); font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+
+<header class="hdr">
+  <div class="hdr-brand">
+    <div class="patch">
+      <div class="patch-inner">
+        <div class="patch-icon">◈</div>
+        <div class="patch-text">HERMES</div>
+      </div>
+    </div>
+    <div>
+      <div class="brand-title">HERMES</div>
+      <div class="brand-sub">AUTONOMOUS CUBESAT · FLIGHT SOFTWARE & GROUND NETWORK</div>
+    </div>
+  </div>
+
+  <div class="hdr-centre">
+    <div class="flag-grp">
+      <div class="flag flag-ie"><div class="s1"></div><div class="s2"></div><div class="s3"></div></div>
+      <span class="flag-lbl">TU DUBLIN</span>
+    </div>
+    <div class="flag-grp">
+      <div class="flag flag-esa"><span>ESA</span></div>
+      <span class="flag-lbl">ESA PARTNER</span>
+    </div>
+  </div>
+
+  <div class="hdr-r">
+    <nav class="nav">
+      <a href="index.html" class="active">HOME</a>
+      <a href="../flight.html">FLIGHT SOFTWARE</a>
+      <a href="../network.html">GROUND NETWORK</a>
+    </nav>
+  </div>
+</header>
+
+<main class="main">
+
+  <div class="hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">TU DUBLIN · CS INFRASTRUCTURE · FINAL YEAR PROJECT</div>
+      <div class="hero-title">H<span class="accent">E</span>RMES</div>
+      <p class="hero-desc">
+        Autonomous CubeSat mission with onboard fault detection and a distributed
+        global ground station network. Six subsystems monitored in real time.
+        Faults detected, isolated and recovered without ground intervention.
+        Four ESA-partnership stations across four continents tracking every pass.
+      </p>
+    </div>
+
+    <div class="hero-right">
+      <div class="si"><div class="si-lbl">MISSION TIME</div><div class="si-val" id="met">000:00:12:44</div></div>
+      <div class="si"><div class="si-lbl">FLIGHT MODE</div><div class="si-val w">NOMINAL</div></div>
+      <div class="si"><div class="si-lbl">ACTIVE STATION</div><div class="si-val sm w" id="si-station">Dublin</div></div>
+      <div class="si"><div class="si-lbl">FDIR STATUS</div><div class="si-val g">ARMED</div></div>
+      <div class="si"><div class="si-lbl">SYSTEM HEALTH</div><div class="si-val g">ALL NOMINAL</div></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val a" id="st-met">00:12:44</div><div class="stat-lbl">MISSION TIME</div></div>
+    <div class="stat"><div class="stat-val g" id="st-bat">78.2%</div><div class="stat-lbl">BATTERY</div></div>
+    <div class="stat"><div class="stat-val" id="st-temp">24.4°C</div><div class="stat-lbl">CORE TEMP</div></div>
+    <div class="stat"><div class="stat-val a">4</div><div class="stat-lbl">GROUND STATIONS</div></div>
+    <div class="stat"><div class="stat-val" id="st-ho">0</div><div class="stat-lbl">HANDOVERS</div></div>
+    <div class="stat"><div class="stat-val g" id="st-uptime">99.98%</div><div class="stat-lbl">UPTIME</div></div>
+  </div>
+
+  <div class="dash-grid">
+    <a class="mini-dash" href="../flight.html">
+      <div class="md-hdr">
+        <div><div class="md-title">HERMES · FLIGHT SOFTWARE</div><div class="md-sub">ONBOARD AUTONOMOUS CONTROL SYSTEM</div></div>
+        <div class="md-badge">● NOMINAL</div>
+      </div>
+      <div class="md-body">
+        <div class="ss-grid">
+          <div class="ss-item"><div class="ss-row"><span class="ss-name">Power System</span><span class="ss-st ok">NOMINAL</span></div><div class="bar"><div class="bar-f bf-g" id="m-bar-eps" style="width:78%"></div></div></div>
+          <div class="ss-item"><div class="ss-row"><span class="ss-name">Attitude Control</span><span class="ss-st ok">STABLE</span></div><div class="bar"><div class="bar-f bf-g" style="width:94%"></div></div></div>
+          <div class="ss-item"><div class="ss-row"><span class="ss-name">Communications</span><span class="ss-st ok">TX/RX</span></div><div class="bar"><div class="bar-f bf-b" style="width:82%"></div></div></div>
+          <div class="ss-item"><div class="ss-row"><span class="ss-name">Fault Detection</span><span class="ss-st ok">ARMED</span></div><div class="bar"><div class="bar-f bf-g" style="width:100%"></div></div></div>
+          <div class="ss-item"><div class="ss-row"><span class="ss-name">Thermal</span><span class="ss-st ok">NOMINAL</span></div><div class="bar"><div class="bar-f bf-a" id="m-bar-thm" style="width:52%"></div></div></div>
+          <div class="ss-item"><div class="ss-row"><span class="ss-name">On-Board Computer</span><span class="ss-st ok">RUNNING</span></div><div class="bar"><div class="bar-f bf-b" id="m-bar-obc" style="width:34%"></div></div></div>
+        </div>
+        <div class="md-cta">OPEN FLIGHT SOFTWARE MONITOR <span class="arrow">→</span></div>
+      </div>
+    </a>
+
+    <a class="mini-dash" href="../network.html">
+      <div class="md-hdr">
+        <div><div class="md-title">GROUND NETWORK</div><div class="md-sub">DISTRIBUTED INTERNATIONAL TRACKING STATIONS</div></div>
+        <div class="md-badge a">● 4 NODES ONLINE</div>
+      </div>
+      <div class="md-body">
+        <div class="gs-list">
+          <div class="gs-row active" id="mg-0"><div class="gs-dot"></div><span class="gs-name">Dublin, Ireland — Primary Hub</span><div class="gs-rb"><div class="gs-rf" id="mr-0" style="width:82%"></div></div><span class="gs-rv" id="mrv-0">-72 dBm</span></div>
+          <div class="gs-row" id="mg-1"><div class="gs-dot"></div><span class="gs-name">Johannesburg, South Africa — ESA Partner</span><div class="gs-rb"><div class="gs-rf" id="mr-1" style="width:44%"></div></div><span class="gs-rv" id="mrv-1">-95 dBm</span></div>
+          <div class="gs-row" id="mg-2"><div class="gs-dot"></div><span class="gs-name">New Norcia, Australia — ESA Deep Space</span><div class="gs-rb"><div class="gs-rf" id="mr-2" style="width:25%"></div></div><span class="gs-rv" id="mrv-2">-104 dBm</span></div>
+          <div class="gs-row" id="mg-3"><div class="gs-dot"></div><span class="gs-name">Malargüe, Argentina — ESA Deep Space</span><div class="gs-rb"><div class="gs-rf" id="mr-3" style="width:16%"></div></div><span class="gs-rv" id="mrv-3">-109 dBm</span></div>
+        </div>
+        <div class="md-cta">OPEN GROUND NETWORK MONITOR <span class="arrow">→</span></div>
+      </div>
+    </a>
+  </div>
+
+  <div class="events-hdr">MISSION EVENTS</div>
+  <div class="events-grid">
+    <div class="event-card">
+      <div class="ev-time">T+000:00:00:01</div>
+      <div class="ev-title">FLIGHT SOFTWARE BOOT</div>
+      <div class="ev-desc">All 6 subsystems passed self-test. Fault detection engine armed and watching. Scheduler active with 7 registered tasks.</div>
+      <div class="ev-tag ok">NOMINAL</div>
+    </div>
+    <div class="event-card">
+      <div class="ev-time">T+000:00:00:04</div>
+      <div class="ev-title">GROUND NETWORK ONLINE</div>
+      <div class="ev-desc">All four ESA-partnership stations connected across four continents. Dublin selected as primary. MQTT broker active. Redis state synchronised globally.</div>
+      <div class="ev-tag info">NETWORK</div>
+    </div>
+    <div class="event-card">
+      <div class="ev-time" id="ev3-time">T+000:00:12:44</div>
+      <div class="ev-title">MISSION NOMINAL</div>
+      <div class="ev-desc">All subsystems operating within parameters. Zero fault events recorded. Continuous telemetry downlink active to Dublin ground station.</div>
+      <div class="ev-tag ok">NOMINAL</div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div>HERMES · AUTONOMOUS CUBESAT MISSION · TU DUBLIN</div>
+  <div style="opacity:0.4">ALL SYSTEMS NOMINAL</div>
+  <div id="footer-utc">--:--:-- UTC</div>
+</footer>
+
+<script>
+// Stars
+const style=document.createElement('style');
+style.textContent='@keyframes tw{0%,100%{opacity:var(--o,0.12)}50%{opacity:0.01}}';
+document.head.appendChild(style);
+const sf=document.getElementById('stars');
+for(let i=0;i<200;i++){
+  const s=document.createElement('div');
+  const sz=Math.random()*1.4+0.3;
+  const isAmber=Math.random()>0.88;
+  s.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:${isAmber?'#f5a623':'#f0ece0'};top:${Math.random()*100}%;left:${Math.random()*100}%;--o:${Math.random()*0.2+0.04};animation:tw ${Math.random()*5+3}s ease-in-out ${Math.random()*6}s infinite`;
+  sf.appendChild(s);
+}
+
+// Shared orbital simulation — mirrors network.html
+const INC=97.4*Math.PI/180;
+let orbAngle=0.8;
+const GS=[
+  {name:'Dublin',      lat: 53.33, lon: -6.25},
+  {name:'Johannesburg',lat:-26.20, lon: 28.04},
+  {name:'New Norcia',  lat:-31.05, lon:116.19},
+  {name:'Malargüe',   lat:-35.77, lon:-69.40},
+];
+
+let metSecs=764,bat=78.2,temp=24.4,cpu=34,activeGS=0,hoCount=0;
+let rssiVals=[-72,-95,-104,-109];
+
+function p2(n){return String(Math.floor(n)).padStart(2,'0');}
+function jit(v,a){return v+(Math.random()-0.5)*a;}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+
+function getSatPos(a){
+  const lat=Math.asin(Math.sin(INC)*Math.sin(a))*180/Math.PI;
+  const lon=(Math.atan2(Math.cos(INC)*Math.sin(a),Math.cos(a))*180/Math.PI+360)%360-180;
+  return{lat,lon};
+}
+
+// MET clock
+setInterval(()=>{
+  metSecs++;
+  const d=Math.floor(metSecs/86400),h=Math.floor((metSecs%86400)/3600),m=Math.floor((metSecs%3600)/60),s=metSecs%60;
+  const full=`${String(d).padStart(3,'0')}:${p2(h)}:${p2(m)}:${p2(s)}`;
+  set('met',full);set('st-met',`${p2(h)}:${p2(m)}:${p2(s)}`);set('ev3-time','T+'+full);
+  set('st-uptime',Math.max(99.90,99.98+jit(0,0.005)).toFixed(2)+'%');
+},1000);
+
+// Orbital + handover simulation
+setInterval(()=>{
+  orbAngle+=(2*Math.PI/300)*1.4;
+  if(orbAngle>2*Math.PI)orbAngle-=2*Math.PI;
+  const sat=getSatPos(orbAngle);
+
+  GS.forEach((gs,i)=>{
+    const φ1=sat.lat*Math.PI/180,φ2=gs.lat*Math.PI/180;
+    const Δφ=(gs.lat-sat.lat)*Math.PI/180,Δλ=(gs.lon-sat.lon)*Math.PI/180;
+    const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+    const distDeg=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*180/Math.PI;
+    rssiVals[i]=clamp(-52-distDeg*1.5+jit(0,2.5),-120,-30);
+  });
+
+  const best=rssiVals.indexOf(Math.max(...rssiVals));
+  if(best!==activeGS&&rssiVals[best]>rssiVals[activeGS]+3){
+    activeGS=best;hoCount++;
+    set('st-ho',hoCount);
+  }
+  set('si-station',GS[activeGS].name);
+
+  rssiVals.forEach((v,i)=>{
+    const pct=Math.max(0,(v+120)/80*100);
+    const fill=document.getElementById(`mr-${i}`);
+    const val=document.getElementById(`mrv-${i}`);
+    const node=document.getElementById(`mg-${i}`);
+    if(fill)fill.style.width=pct+'%';
+    if(val)val.textContent=v.toFixed(0)+' dBm';
+    if(node){i===activeGS?node.classList.add('active'):node.classList.remove('active');}
+  });
+},1400);
+
+// Telemetry
+setInterval(()=>{
+  bat=clamp(jit(bat,0.08),60,95);temp=clamp(jit(temp,0.15),20,32);cpu=clamp(jit(cpu,2),20,55);
+  set('st-bat',bat.toFixed(1)+'%');set('st-temp',temp.toFixed(1)+'°C');
+  const batEl=document.getElementById('st-bat');
+  if(batEl)batEl.style.color=bat<30?'var(--red)':bat<50?'var(--amber)':'var(--green)';
+  const epsBar=document.getElementById('m-bar-eps');if(epsBar)epsBar.style.width=bat+'%';
+  const obcBar=document.getElementById('m-bar-obc');if(obcBar)obcBar.style.width=cpu+'%';
+},1400);
+
+// UTC clock
+setInterval(()=>{
+  const n=new Date();
+  set('footer-utc',`${p2(n.getUTCHours())}:${p2(n.getUTCMinutes())}:${p2(n.getUTCSeconds())} UTC`);
+},1000);
+</script>
+</body>
+</html>
